@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  PlayCircle,
   History,
   Dumbbell,
   Settings,
@@ -17,8 +18,9 @@ import { loadProfile } from '@/lib/profileStorage';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
-  { label: 'History', icon: History, to: '/history' },
+  { label: 'Log Workout', icon: PlayCircle, to: '/workout' },
   { label: 'Exercises', icon: Dumbbell, to: '/exercises' },
+  { label: 'History', icon: History, to: '/history' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -4,6 +4,7 @@ import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import OnboardingPage from '@/pages/OnboardingPage';
 import DashboardPage from '@/pages/DashboardPage';
+import LogWorkoutPage from '@/pages/LogWorkoutPage';
 import HistoryPage from '@/pages/HistoryPage';
 import ExercisesPage from '@/pages/ExercisesPage';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
@@ -19,6 +20,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/workout" element={<LogWorkoutPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/exercises" element={<ExercisesPage />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />

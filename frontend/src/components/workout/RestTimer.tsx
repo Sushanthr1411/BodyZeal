@@ -6,8 +6,8 @@ import { useRestTimer, DEFAULT_REST_SECONDS } from '@/hooks/useRestTimer';
 const RADIUS = 52;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export default function RestTimerCard() {
-  const { seconds, running, toggle, reset } = useRestTimer();
+export default function RestTimer() {
+  const { seconds, running, start, pause, reset } = useRestTimer();
   const progress = seconds / DEFAULT_REST_SECONDS;
   const low = seconds > 0 && seconds <= 10;
   const ringColor = low ? '#eb6834' : '#84CC16';
@@ -63,28 +63,38 @@ export default function RestTimerCard() {
           </motion.p>
         </div>
 
-        <div className="mt-5 grid w-full grid-cols-2 gap-2">
+        <div className="mt-5 grid w-full grid-cols-3 gap-2">
           <motion.button
             whileTap={{ scale: 0.96 }}
             type="button"
-            onClick={toggle}
-            className="btn-accent col-span-2"
+            onClick={start}
+            disabled={running || seconds === 0}
+            className="btn-accent col-span-1 px-2 text-sm"
           >
-            {running ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {running ? 'Pause' : 'Start'} timer
+            <Play className="h-3.5 w-3.5" />
+            Start
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            type="button"
+            onClick={pause}
+            disabled={!running}
+            className="btn col-span-1 bg-ink-100 px-2 text-sm text-ink-700 hover:bg-ink-200"
+          >
+            <Pause className="h-3.5 w-3.5" />
+            Pause
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.96 }}
             type="button"
             onClick={reset}
-            className="btn col-span-2 bg-ink-100 text-ink-700 hover:bg-ink-200"
+            className="btn col-span-1 bg-ink-100 px-2 text-sm text-ink-700 hover:bg-ink-200"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-3.5 w-3.5" />
             Reset
           </motion.button>
         </div>
       </div>
-      <p className="relative mt-3 text-center text-xs text-ink-400">60 second rest countdown</p>
     </div>
   );
 }

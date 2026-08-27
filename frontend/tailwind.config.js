@@ -29,6 +29,13 @@ export default {
           800: '#3F6212',
           900: '#365314',
         },
+        // Accent family — same hues already used in Dashboard analytics, now also
+        // used for card identity/icon treatments so the Dashboard reads as more
+        // than one color without introducing a second, unrelated palette.
+        sky: { 50: '#EAF3FC', 400: '#5598E7', 500: '#2a78d6', 600: '#1c5cab' },
+        coral: { 50: '#FDEEE7', 400: '#F0916A', 500: '#eb6834', 600: '#c9531f' },
+        violet: { 50: '#EFEDFA', 400: '#8172D6', 500: '#4a3aa7', 600: '#392C82' },
+        aqua: { 50: '#E6F6F0', 400: '#3FC694', 500: '#1baf7a', 600: '#158F63' },
       },
       fontFamily: {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
