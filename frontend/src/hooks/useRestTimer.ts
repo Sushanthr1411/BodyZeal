@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 
 export const DEFAULT_REST_SECONDS = 60;
+export const MIN_REST_SECONDS = 15;
+export const MAX_REST_SECONDS = 300;
+const DURATION_STEP = 15;
 
 export function useRestTimer(defaultSeconds: number = DEFAULT_REST_SECONDS) {
+  const [duration, setDurationState] = useState(defaultSeconds);
   const [seconds, setSeconds] = useState(defaultSeconds);
   const [running, setRunning] = useState(false);
 
@@ -30,12 +34,30 @@ export function useRestTimer(defaultSeconds: number = DEFAULT_REST_SECONDS) {
 
   function reset() {
     setRunning(false);
-    setSeconds(defaultSeconds);
+    setSeconds(duration);
+  }
+
+  function restart() {
+    setSeconds(duration);
+    setRunning(true);
   }
 
   function toggle() {
     setRunning((current) => !current);
   }
 
-  return { seconds, running, start, pause, reset, toggle };
+  function setDuration(next: number) {
+    const clamped = Math.max(MIN_REST_SECONDS, Math.min(MAX_REST_SECONDS, next));
+    setDurationState(clamped);
+    setRunning(false);
+    setSeconds(clamped);
+  }
+
+  function adjustDuration(delta: number) {
+    setDuration(duration + delta);
+  }
+
+  return { seconds, duration, running, start, pause, reset, restart, toggle, setDuration, adjustDuration };
 }
+
+export { DURATION_STEP };

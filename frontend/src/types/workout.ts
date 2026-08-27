@@ -41,3 +41,20 @@ export interface DailySummary {
   exercisesCompleted: number;
   totalVolume: number;
 }
+
+/** A single exercise slot within a planned Routine, referencing the shared Exercise dataset by id. */
+export interface RoutineExercise {
+  exerciseId: string;
+  plannedSets: number;
+}
+
+/**
+ * A Routine is the PLAN (ordered exercises + target sets). A Workout Session is the user's
+ * actual execution of that plan, represented with the existing WorkoutSet/Exercise types —
+ * Routine never replaces or duplicates those.
+ */
+export interface Routine {
+  id: string;
+  name: string;
+  exercises: RoutineExercise[];
+}

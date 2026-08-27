@@ -58,8 +58,10 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
   ] as const;
 
   return (
-    <div className="card relative overflow-hidden p-5">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-energy-400/10 blur-3xl" />
+    <div className="card relative p-5">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-energy-400/10 blur-3xl" />
+      </div>
       <div className="relative flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-900 text-energy-400">

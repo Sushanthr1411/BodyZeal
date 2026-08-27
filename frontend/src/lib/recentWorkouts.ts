@@ -19,6 +19,7 @@ export type RecentWorkout = {
   totalVolume: number;
   totalSets?: number;
   sets?: RecentWorkoutSet[];
+  durationSeconds?: number;
 };
 
 export function loadRecentWorkouts(): RecentWorkout[] {

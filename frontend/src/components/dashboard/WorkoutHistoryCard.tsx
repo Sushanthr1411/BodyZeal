@@ -5,7 +5,14 @@ import type { WorkoutSet } from '@/types/workout';
 import { formatTime } from '@/utils/workout';
 import EmptyState from '@/components/common/EmptyState';
 
-export default function WorkoutHistoryCard({ entries, onRemove }: { entries: WorkoutSet[]; onRemove: (id: string) => void }) {
+type WorkoutHistoryCardProps = {
+  entries: WorkoutSet[];
+  onRemove: (id: string) => void;
+  /** If provided, only these ids show a remove control (entries sourced from a finished/active routine session aren't removable here). */
+  removableIds?: Set<string>;
+};
+
+export default function WorkoutHistoryCard({ entries, onRemove, removableIds }: WorkoutHistoryCardProps) {
   const ordered = entries.slice().reverse();
 
   return (
@@ -59,14 +66,16 @@ export default function WorkoutHistoryCard({ entries, onRemove }: { entries: Wor
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-semibold text-ink-900">{entry.volume.toLocaleString()} kg</p>
-                  <button
-                    type="button"
-                    onClick={() => onRemove(entry.id)}
-                    className="mt-1 inline-flex items-center gap-1 text-xs text-ink-500 hover:text-red-600"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    Remove
-                  </button>
+                  {(!removableIds || removableIds.has(entry.id)) && (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(entry.id)}
+                      className="mt-1 inline-flex items-center gap-1 text-xs text-ink-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Remove
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}

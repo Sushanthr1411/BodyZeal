@@ -47,10 +47,9 @@ export default function AnalyticsSection({ history }: AnalyticsSectionProps) {
         <MuscleGroupChart data={muscleGroupBreakdown(history)} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <FrequencyHeatmap data={frequencyGrid(history, 8)} />
-        <ExerciseProgressChart history={history} />
-      </div>
+      <FrequencyHeatmap data={frequencyGrid(history, 20)} />
+
+      <ExerciseProgressChart history={history} />
     </div>
   );
 }

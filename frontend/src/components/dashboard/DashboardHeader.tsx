@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Calendar, PlayCircle, Sparkles } from 'lucide-react';
+import { Calendar, PlayCircle, PlusCircle, Sparkles } from 'lucide-react';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -60,6 +60,14 @@ export default function DashboardHeader({ firstName, hasLoggedToday }: Dashboard
             </span>
             {hasLoggedToday ? 'In progress' : 'Ready to log'}
           </span>
+          <Link
+            to="/workout/new"
+            title="Create a routine"
+            aria-label="Create a routine"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/5 text-ink-200 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <PlusCircle className="h-4.5 w-4.5" strokeWidth={2} />
+          </Link>
           <Link to="/workout" className="btn-accent">
             <PlayCircle className="h-4 w-4" />
             Start workout

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   PlayCircle,
   History,
+  CalendarDays,
   Dumbbell,
   Settings,
   LogOut,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import Brand from '@/components/Brand';
 import StreakBox from '@/components/dashboard/StreakBox';
+import AssistantWidget from '@/components/assistant/AssistantWidget';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { loadProfile } from '@/lib/profileStorage';
@@ -24,6 +26,7 @@ const NAV_ITEMS = [
   { label: 'Log Workout', icon: PlayCircle, to: '/workout' },
   { label: 'Exercises', icon: Dumbbell, to: '/exercises' },
   { label: 'History', icon: History, to: '/history' },
+  { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -238,6 +241,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
       </div>
+
+      <AssistantWidget />
     </div>
   );
 }

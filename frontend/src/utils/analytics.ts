@@ -1,11 +1,20 @@
 import type { RecentWorkout } from '@/lib/recentWorkouts';
-import { EXERCISES } from '@/data/exercises';
+import { EXERCISES, MUSCLE_GROUP_OPTIONS } from '@/data/exercises';
 import type { MuscleGroup } from '@/types/workout';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function dateKey(iso: string): string {
+export function dateKey(iso: string): string {
   return iso.slice(0, 10);
+}
+
+export function isToday(iso: string): boolean {
+  return dateKey(iso) === dateKey(new Date().toISOString());
+}
+
+/** Finished workouts from the calendar day that has just started/ended (today), if any. */
+export function todaysWorkouts(history: RecentWorkout[]): RecentWorkout[] {
+  return history.filter((workout) => isToday(workout.finishedAt));
 }
 
 function muscleGroupFor(exerciseName: string): MuscleGroup | null {
@@ -37,6 +46,18 @@ export function volumeByDay(history: RecentWorkout[], days = 7): DayVolume[] {
     label: new Date(key).toLocaleDateString('en-US', { weekday: 'short' }),
     volume: buckets.get(key) ?? 0,
   }));
+}
+
+/** Volume per muscle group across all history, zero-filled for groups never trained. */
+export function muscleGroupVolumeAll(history: RecentWorkout[]): Record<MuscleGroup, number> {
+  const totals = Object.fromEntries(MUSCLE_GROUP_OPTIONS.map((group) => [group, 0])) as Record<MuscleGroup, number>;
+  for (const workout of history) {
+    for (const set of workout.sets ?? []) {
+      const group = muscleGroupFor(set.exerciseName);
+      if (group) totals[group] += set.volume;
+    }
+  }
+  return totals;
 }
 
 export type MuscleGroupSlice = { muscleGroup: string; volume: number; percent: number };
@@ -84,7 +105,15 @@ export function frequencyGrid(history: RecentWorkout[], weeks = 8): FrequencyDay
   return result;
 }
 
-export type ExerciseHistoryPoint = { dateKey: string; label: string; topWeight: number; volume: number };
+export type ExerciseHistoryPoint = {
+  dateKey: string;
+  label: string;
+  finishedAt: string;
+  topWeight: number;
+  volume: number;
+  setCount: number;
+  topReps: number;
+};
 
 /** All exercise names that appear anywhere in history, ordered by how often they're logged. */
 export function loggedExerciseNames(history: RecentWorkout[]): string[] {
@@ -97,21 +126,60 @@ export function loggedExerciseNames(history: RecentWorkout[]): string[] {
   return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(([name]) => name);
 }
 
-/** Per-session top weight and volume for one exercise, oldest first. */
+/** Per-session summary (top weight, reps at that weight, set count, total volume) for one exercise, oldest first. */
 export function exerciseProgress(history: RecentWorkout[], exerciseName: string): ExerciseHistoryPoint[] {
   const points: ExerciseHistoryPoint[] = [];
   const sorted = history.slice().sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : 1));
   for (const workout of sorted) {
     const sets = (workout.sets ?? []).filter((s) => s.exerciseName === exerciseName);
     if (sets.length === 0) continue;
+    const topWeight = Math.max(...sets.map((s) => s.weight));
+    const topSet = sets.find((s) => s.weight === topWeight) ?? sets[0];
     points.push({
       dateKey: dateKey(workout.finishedAt),
       label: new Date(workout.finishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      topWeight: Math.max(...sets.map((s) => s.weight)),
+      finishedAt: workout.finishedAt,
+      topWeight,
       volume: sets.reduce((sum, s) => sum + s.volume, 0),
+      setCount: sets.length,
+      topReps: topSet.reps,
     });
   }
   return points;
+}
+
+export type ExerciseStats = {
+  timesPerformed: number;
+  bestWeight: number;
+  bestReps: number;
+  bestSetVolume: number;
+  totalVolume: number;
+  heaviestWeightRecord: { weight: number; reps: number };
+  highestVolumeSession: { volume: number; label: string; dateKey: string };
+  bestRepsRecord: { reps: number; weight: number };
+};
+
+/** Lifetime performance stats for one exercise, across all history (unaffected by any chart time-range filter). */
+export function exerciseStats(history: RecentWorkout[], exerciseName: string): ExerciseStats | null {
+  const allSets = history.flatMap((workout) => (workout.sets ?? []).filter((set) => set.exerciseName === exerciseName));
+  if (allSets.length === 0) return null;
+
+  const points = exerciseProgress(history, exerciseName);
+  const heaviestSet = allSets.reduce((best, set) => (set.weight > best.weight ? set : best));
+  const bestRepsSet = allSets.reduce((best, set) => (set.reps > best.reps ? set : best));
+  const bestVolumeSet = allSets.reduce((best, set) => (set.volume > best.volume ? set : best));
+  const highestVolumePoint = points.reduce((best, point) => (point.volume > best.volume ? point : best), points[0]);
+
+  return {
+    timesPerformed: points.length,
+    bestWeight: heaviestSet.weight,
+    bestReps: bestRepsSet.reps,
+    bestSetVolume: bestVolumeSet.volume,
+    totalVolume: allSets.reduce((sum, set) => sum + set.volume, 0),
+    heaviestWeightRecord: { weight: heaviestSet.weight, reps: heaviestSet.reps },
+    highestVolumeSession: { volume: highestVolumePoint.volume, label: highestVolumePoint.label, dateKey: highestVolumePoint.dateKey },
+    bestRepsRecord: { reps: bestRepsSet.reps, weight: bestRepsSet.weight },
+  };
 }
 
 export type HistoryGroup = { dateKey: string; label: string; workouts: RecentWorkout[]; totalVolume: number };

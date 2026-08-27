@@ -1,10 +1,12 @@
 import { CheckCircle2, Circle, ListChecks, Plus } from 'lucide-react';
-import type { Exercise } from '@/types/workout';
+import type { Exercise, WorkoutSet } from '@/types/workout';
+import { isExerciseComplete, loggedSetCount, type PlannedSetsMap } from '@/utils/routine';
 
 type WorkoutExerciseListProps = {
   exercises: Exercise[];
   activeExerciseId: string | null;
-  setCounts: Record<string, number>;
+  entries: WorkoutSet[];
+  plannedSets: PlannedSetsMap;
   onSelect: (exercise: Exercise) => void;
   onAddExercise: () => void;
 };
@@ -12,7 +14,8 @@ type WorkoutExerciseListProps = {
 export default function WorkoutExerciseList({
   exercises,
   activeExerciseId,
-  setCounts,
+  entries,
+  plannedSets,
   onSelect,
   onAddExercise,
 }: WorkoutExerciseListProps) {
@@ -31,7 +34,9 @@ export default function WorkoutExerciseList({
       ) : (
         <div className="mt-3 space-y-1.5">
           {exercises.map((exercise) => {
-            const count = setCounts[exercise.name] ?? 0;
+            const count = loggedSetCount(exercise, entries);
+            const planned = plannedSets[exercise.id];
+            const complete = isExerciseComplete(exercise, entries, plannedSets);
             const active = exercise.id === activeExerciseId;
             return (
               <button
@@ -43,7 +48,7 @@ export default function WorkoutExerciseList({
                 }`}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  {count > 0 ? (
+                  {complete ? (
                     <CheckCircle2 className={`h-4 w-4 shrink-0 ${active ? 'text-energy-400' : 'text-energy-600'}`} />
                   ) : (
                     <Circle className={`h-4 w-4 shrink-0 ${active ? 'text-ink-300' : 'text-ink-300'}`} />
@@ -51,7 +56,7 @@ export default function WorkoutExerciseList({
                   <span className="truncate font-medium">{exercise.name}</span>
                 </span>
                 <span className={`shrink-0 text-xs ${active ? 'text-ink-300' : 'text-ink-500'}`}>
-                  {count} {count === 1 ? 'set' : 'sets'}
+                  {planned !== undefined ? `${count} / ${planned} sets` : `${count} ${count === 1 ? 'set' : 'sets'}`}
                 </span>
               </button>
             );
