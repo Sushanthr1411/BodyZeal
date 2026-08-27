@@ -16,13 +16,13 @@ export default function MuscleGroupChart({ data }: MuscleGroupChartProps) {
 
   return (
     <div className="card p-5">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-sky-50 text-sky-600">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-50 text-sky-600">
           <PieChartIcon className="h-4.5 w-4.5" strokeWidth={2} />
         </span>
-        <div>
-          <p className="text-sm font-semibold text-ink-900">Muscle Group Split</p>
-          <p className="text-xs text-ink-500">Volume by muscle group, all-time</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink-900">Muscle Group Split</p>
+          <p className="truncate text-xs text-ink-500">Volume by muscle group, all-time</p>
         </div>
       </div>
 

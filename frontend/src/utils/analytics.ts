@@ -147,6 +147,25 @@ export function groupWorkoutsByDate(history: RecentWorkout[]): HistoryGroup[] {
   });
 }
 
+/** Consecutive-day workout streak ending today (or yesterday, if today has no workout yet). */
+export function currentStreak(history: RecentWorkout[]): number {
+  const days = new Set(history.map((workout) => dateKey(workout.finishedAt)));
+  const cursor = new Date();
+  let key = dateKey(cursor.toISOString());
+  if (!days.has(key)) {
+    cursor.setDate(cursor.getDate() - 1);
+    key = dateKey(cursor.toISOString());
+    if (!days.has(key)) return 0;
+  }
+  let streak = 0;
+  while (days.has(key)) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+    key = dateKey(cursor.toISOString());
+  }
+  return streak;
+}
+
 export type PersonalRecord = { exerciseName: string; maxWeight: number; maxVolumeSession: number };
 
 export function personalRecord(history: RecentWorkout[], exerciseName: string): PersonalRecord | null {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Dumbbell, Plus, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Dumbbell, Plus, AlertCircle, Check } from 'lucide-react';
 import type { Exercise, WorkoutSet } from '@/types/workout';
 import { calcVolume } from '@/utils/workout';
 import { EXERCISES } from '@/data/exercises';
 import { ALL_EQUIPMENT, ALL_MUSCLE_GROUPS, filterExercises, type EquipmentFilter, type MuscleGroupFilter } from '@/utils/exercises';
-import ExerciseFilters from '@/components/exercises/ExerciseFilters';
-import ExerciseList from '@/components/exercises/ExerciseList';
+import ExercisePickerPopover from '@/components/dashboard/ExercisePickerPopover';
 
 export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet) => void }) {
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
@@ -15,6 +15,7 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [justAdded, setJustAdded] = useState(false);
 
   const visibleExercises = filterExercises(EXERCISES, equipment, muscleGroup);
   const exerciseName = selectedExercise?.name ?? '';
@@ -46,6 +47,8 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
       loggedAt: new Date().toISOString(),
     });
     setSets(''); setReps(''); setWeight(''); setErrors({});
+    setJustAdded(true);
+    window.setTimeout(() => setJustAdded(false), 1400);
   }
 
   const fields = [
@@ -56,52 +59,41 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
 
   return (
     <div className="card p-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-ink-900 text-energy-400">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ink-900 text-energy-400">
             <Dumbbell className="h-4.5 w-4.5" strokeWidth={2} />
           </span>
-          <div>
-            <p className="text-sm font-semibold text-ink-900">Log a Set</p>
-            <p className="text-xs text-ink-500">Exercise, sets, reps, weight</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-ink-900">Log a Set</p>
+            <p className="truncate text-xs text-ink-500">Pick an exercise, then log the work</p>
           </div>
         </div>
-        <span className="chip bg-energy-50 text-[10px] text-energy-800">Quick entry</span>
+        <motion.span
+          animate={justAdded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+          className="chip shrink-0 border-energy-300/60 bg-energy-50 text-[11px] text-energy-800"
+        >
+          <Check className="h-3 w-3" />
+          Set added
+        </motion.span>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-5" noValidate>
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4" noValidate>
         <div>
-          <div className="rounded-xl border border-ink-200 bg-ink-50/40 p-4">
-            <ExerciseFilters
-              equipment={equipment}
-              muscleGroup={muscleGroup}
-              onEquipmentChange={setEquipment}
-              onMuscleGroupChange={setMuscleGroup}
-            />
-
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-400">
-                Available Exercises
-              </p>
-              <ExerciseList
-                exercises={visibleExercises}
-                selectedId={selectedExercise?.id ?? null}
-                onSelect={handleSelectExercise}
-                variant="compact"
-              />
-            </div>
-
-            {selectedExercise && (
-              <p className="mt-3 text-xs text-ink-500">
-                Selected: <span className="font-semibold text-ink-800">{selectedExercise.name}</span>
-              </p>
-            )}
-          </div>
+          <ExercisePickerPopover
+            exercises={visibleExercises}
+            selectedExercise={selectedExercise}
+            equipment={equipment}
+            muscleGroup={muscleGroup}
+            onEquipmentChange={setEquipment}
+            onMuscleGroupChange={setMuscleGroup}
+            onSelect={handleSelectExercise}
+          />
           {errors.exercise && <ErrorMessage message={errors.exercise} />}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
-          <div className="grid grid-cols-3 gap-3 lg:col-span-9">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-start">
+          <div className="grid grid-cols-3 gap-2 sm:col-span-9 sm:gap-3">
             {fields.map(({ label, value, setter, key }) => (
               <div key={key}>
                 <label htmlFor={key} className="label">{label}</label>
@@ -121,12 +113,12 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
             ))}
           </div>
 
-          <div className="lg:col-span-3">
-            <span className="label hidden lg:block">&nbsp;</span>
-            <button type="submit" className="btn-accent w-full">
+          <div className="sm:col-span-3">
+            <span className="label hidden sm:block">&nbsp;</span>
+            <motion.button whileTap={{ scale: 0.97 }} type="submit" className="btn-accent w-full">
               <Plus className="h-4 w-4" />
               Add set
-            </button>
+            </motion.button>
           </div>
         </div>
       </form>

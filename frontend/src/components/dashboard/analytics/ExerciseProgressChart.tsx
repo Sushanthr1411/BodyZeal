@@ -21,18 +21,18 @@ export default function ExerciseProgressChart({ history }: ExerciseProgressChart
   return (
     <div className="card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-violet-50 text-violet-600">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-violet-50 text-violet-600">
             <Trophy className="h-4.5 w-4.5" strokeWidth={2} />
           </span>
-          <div>
-            <p className="text-sm font-semibold text-ink-900">Progress &amp; Personal Records</p>
-            <p className="text-xs text-ink-500">Top weight per session</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-ink-900">Progress &amp; Personal Records</p>
+            <p className="truncate text-xs text-ink-500">Top weight per session</p>
           </div>
         </div>
 
         {exerciseNames.length > 0 && activeExercise && (
-          <div className="w-48">
+          <div className="w-48 shrink-0">
             <Dropdown
               label="Exercise"
               showLabel={false}

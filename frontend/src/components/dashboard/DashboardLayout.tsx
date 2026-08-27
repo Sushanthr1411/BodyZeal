@@ -12,9 +12,12 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Brand from '@/components/Brand';
+import StreakBox from '@/components/dashboard/StreakBox';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { loadProfile } from '@/lib/profileStorage';
+import { loadRecentWorkouts } from '@/lib/recentWorkouts';
+import { currentStreak } from '@/utils/analytics';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
@@ -31,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState(() => user ? loadProfile(user.uid) : null);
+  const [streak] = useState(() => currentStreak(loadRecentWorkouts()));
 
   useEffect(() => {
     setProfile(user ? loadProfile(user.uid) : null);
@@ -73,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </span>
           </Link>
         </div>
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="space-y-1 p-4">
           <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-ink-400">
             Menu
           </p>
@@ -97,6 +101,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
+        <div className="flex-1" />
+        <div className="px-4 pb-4">
+          <StreakBox streak={streak} />
+        </div>
         <div className="border-t border-white/10 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
             {profile?.profilePhoto ? (
@@ -194,6 +202,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 );
               })}
             </nav>
+            <div className="px-4 pb-4">
+              <StreakBox streak={streak} />
+            </div>
             <div className="border-t border-white/10 p-4">
               <Link
                 to="/settings"

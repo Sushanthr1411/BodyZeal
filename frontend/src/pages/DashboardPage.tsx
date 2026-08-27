@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import SummaryCard from '@/components/dashboard/SummaryCard';
+import TodaySnapshot from '@/components/dashboard/TodaySnapshot';
 import WorkoutEntryCard from '@/components/dashboard/WorkoutEntryCard';
-import VolumeCard from '@/components/dashboard/VolumeCard';
 import RestTimerCard from '@/components/dashboard/RestTimerCard';
 import WorkoutHistoryCard from '@/components/dashboard/WorkoutHistoryCard';
 import AnalyticsSection from '@/components/dashboard/analytics/AnalyticsSection';
@@ -14,9 +13,9 @@ import { useAuth } from '@/context/useAuth';
 import { loadProfile } from '@/lib/profileStorage';
 
 const sectionMotion = (index: number) => ({
-  initial: { opacity: 0, y: 18 },
+  initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] as const },
+  transition: { duration: 0.4, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] as const },
 });
 
 export default function DashboardPage() {
@@ -37,29 +36,33 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <DashboardHeader firstName={firstName} />
-      <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <DashboardHeader firstName={firstName} hasLoggedToday={entries.length > 0} />
+      <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl">
-          {/* Today's status — the two numbers that answer "what did I accomplish today" */}
-          <motion.div {...sectionMotion(0)} className="grid gap-4 sm:grid-cols-2">
-            <SummaryCard exerciseCount={entries.length} />
-            <VolumeCard totalVolume={totalVolume} />
+          {/* Today, at a glance */}
+          <motion.div {...sectionMotion(0)}>
+            <TodaySnapshot exerciseCount={entries.length} totalVolume={totalVolume} />
           </motion.div>
 
-          {/* Primary action: log a set, plus the rest timer that supports the same flow */}
-          <motion.div {...sectionMotion(1)} className="mt-4 grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <WorkoutEntryCard onAdd={addEntry} />
+          {/* Primary workspace: log a set + rest, side by side so both are reachable at once */}
+          <motion.div {...sectionMotion(1)} className="mt-5">
+            <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400">
+              Log Workout
+            </p>
+            <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <WorkoutEntryCard onAdd={addEntry} />
+              </div>
+              <RestTimerCard />
             </div>
-            <RestTimerCard />
           </motion.div>
 
-          {/* Today's activity */}
-          <motion.div {...sectionMotion(2)} className="mt-4">
+          {/* Today's activity — close to the entry flow, not buried below analytics */}
+          <motion.div {...sectionMotion(2)} className="mt-5">
             <WorkoutHistoryCard entries={entries} onRemove={removeEntry} />
           </motion.div>
 
-          {/* Insights — trends from finished workouts */}
+          {/* Progress — cohesive analytics section */}
           <motion.div {...sectionMotion(3)} className="mt-6">
             <AnalyticsSection history={history} />
           </motion.div>

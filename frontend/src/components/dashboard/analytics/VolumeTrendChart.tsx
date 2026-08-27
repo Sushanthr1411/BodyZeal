@@ -12,17 +12,17 @@ export default function VolumeTrendChart({ data }: VolumeTrendChartProps) {
 
   return (
     <div className="card p-5">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-energy-50 text-energy-600">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-energy-50 text-energy-600">
             <TrendingUp className="h-4.5 w-4.5" strokeWidth={2} />
           </span>
-          <div>
-            <p className="text-sm font-semibold text-ink-900">Volume Trend</p>
-            <p className="text-xs text-ink-500">Last 7 days</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-ink-900">Volume Trend</p>
+            <p className="truncate text-xs text-ink-500">Last 7 days</p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <p className="font-display text-xl font-700 text-ink-900">{total.toLocaleString()}</p>
           <p className="text-[11px] text-ink-500">kg this week</p>
         </div>
