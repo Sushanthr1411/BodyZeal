@@ -26,8 +26,9 @@ export default function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
   const activeDays = data.filter((d) => d.count > 0).length;
 
   return (
-    <div className="card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="card relative overflow-hidden p-5">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-coral-400/10 blur-3xl" />
+      <div className="relative flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-coral-50 text-coral-600">
             <CalendarRange className="h-4.5 w-4.5" strokeWidth={2} />

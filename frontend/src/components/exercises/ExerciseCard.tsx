@@ -16,7 +16,7 @@ export default function ExerciseCard({ exercise, selected, onSelect }: ExerciseC
       className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors ${
         selected
           ? 'border-ink-900 bg-ink-900 text-white'
-          : 'border-ink-200 bg-white text-ink-700 hover:border-ink-300'
+          : 'border-ink-200 bg-ink-50/50 text-ink-700 hover:border-energy-300 hover:bg-white'
       }`}
     >
       <span className="min-w-0">

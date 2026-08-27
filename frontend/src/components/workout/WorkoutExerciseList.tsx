@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Plus } from 'lucide-react';
+import { CheckCircle2, Circle, ListChecks, Plus } from 'lucide-react';
 import type { Exercise } from '@/types/workout';
 
 type WorkoutExerciseListProps = {
@@ -17,8 +17,14 @@ export default function WorkoutExerciseList({
   onAddExercise,
 }: WorkoutExerciseListProps) {
   return (
-    <div className="card p-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Workout Exercises</p>
+    <div className="card relative overflow-hidden p-5">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl" />
+      <div className="relative flex items-center gap-2">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-50 text-sky-600">
+          <ListChecks className="h-4.5 w-4.5" strokeWidth={2} />
+        </span>
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Workout Exercises</p>
+      </div>
 
       {exercises.length === 0 ? (
         <p className="mt-3 text-sm text-ink-500">No exercises added yet.</p>

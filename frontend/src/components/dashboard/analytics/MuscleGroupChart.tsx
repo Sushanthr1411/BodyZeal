@@ -15,8 +15,9 @@ export default function MuscleGroupChart({ data }: MuscleGroupChartProps) {
   const maxVolume = Math.max(...chartData.map((d) => d.volume), 1);
 
   return (
-    <div className="card p-5">
-      <div className="flex min-w-0 items-center gap-2">
+    <div className="card relative overflow-hidden p-5">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl" />
+      <div className="relative flex min-w-0 items-center gap-2">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-50 text-sky-600">
           <PieChartIcon className="h-4.5 w-4.5" strokeWidth={2} />
         </span>

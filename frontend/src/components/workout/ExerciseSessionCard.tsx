@@ -40,8 +40,9 @@ export default function ExerciseSessionCard({
   const showPicker = pickerOpen || !selectedExercise;
 
   return (
-    <div className="card p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="card relative overflow-hidden p-5">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-energy-400/10 blur-3xl" />
+      <div className="relative flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-ink-900 text-energy-400">
             <Dumbbell className="h-4.5 w-4.5" strokeWidth={2} />

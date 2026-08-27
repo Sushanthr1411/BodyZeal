@@ -63,9 +63,10 @@ export default function HistoryPage() {
                         })),
                       );
                       return (
-                        <div key={`${workout.name}-${workout.finishedAt}`} className="card relative -ml-[27px] p-5">
+                        <div key={`${workout.name}-${workout.finishedAt}`} className="card relative -ml-[27px] overflow-hidden p-5">
+                          <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-energy-400/10 blur-3xl" />
                           <span className="absolute -left-[7px] top-6 h-3 w-3 rounded-full border-2 border-white bg-energy-400" />
-                          <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="relative flex flex-wrap items-center justify-between gap-2">
                             <p className="text-sm font-semibold text-ink-900">{workout.name}</p>
                             <div className="flex items-center gap-3 text-xs text-ink-500">
                               <span>{new Date(workout.finishedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
@@ -75,9 +76,9 @@ export default function HistoryPage() {
                           </div>
 
                           {grouped.length > 0 && (
-                            <div className="mt-4 space-y-2">
+                            <div className="relative mt-4 space-y-2">
                               {grouped.map((exercise) => (
-                                <div key={exercise.exerciseName} className="flex items-center justify-between gap-3 rounded-lg bg-ink-50 px-3 py-2">
+                                <div key={exercise.exerciseName} className="flex items-center justify-between gap-3 rounded-lg bg-aqua-50/40 px-3 py-2">
                                   <span className="flex min-w-0 items-center gap-2">
                                     <Dumbbell className="h-3.5 w-3.5 shrink-0 text-ink-400" />
                                     <span className="truncate text-sm font-medium text-ink-800">{exercise.exerciseName}</span>

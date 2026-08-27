@@ -54,7 +54,7 @@ export default function WorkoutStart({ onStart, recentWorkouts }: WorkoutStartPr
 
           {(thisWeek > 0 || lastWorkout) && (
             <div className="mt-6 grid grid-cols-2 gap-2.5 text-left">
-              <div className="rounded-xl bg-ink-50 px-3.5 py-3">
+              <div className="rounded-xl bg-energy-50/60 px-3.5 py-3">
                 <div className="flex items-center gap-1.5 text-energy-600">
                   <Flame className="h-3.5 w-3.5" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide">This week</span>
@@ -62,8 +62,8 @@ export default function WorkoutStart({ onStart, recentWorkouts }: WorkoutStartPr
                 <p className="mt-1 font-display text-xl font-700 text-ink-900">{thisWeek}</p>
                 <p className="text-[11px] text-ink-500">{thisWeek === 1 ? 'workout' : 'workouts'}</p>
               </div>
-              <div className="rounded-xl bg-ink-50 px-3.5 py-3">
-                <div className="flex items-center gap-1.5 text-ink-500">
+              <div className="rounded-xl bg-sky-50/60 px-3.5 py-3">
+                <div className="flex items-center gap-1.5 text-sky-600">
                   <Clock className="h-3.5 w-3.5" />
                   <span className="text-[10px] font-semibold uppercase tracking-wide">Last workout</span>
                 </div>

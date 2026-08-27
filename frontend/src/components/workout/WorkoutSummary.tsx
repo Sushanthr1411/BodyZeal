@@ -21,10 +21,10 @@ export default function WorkoutSummary({
   onBackToDashboard,
 }: WorkoutSummaryProps) {
   const stats = [
-    { label: 'Exercises', value: exercisesCompleted },
-    { label: 'Total sets', value: totalSets },
-    { label: 'Total volume', value: `${totalVolume.toLocaleString()} kg` },
-    { label: 'Duration', value: formatTime(durationSeconds) },
+    { label: 'Exercises', value: exercisesCompleted, tint: 'bg-aqua-50/60' },
+    { label: 'Total sets', value: totalSets, tint: 'bg-sky-50/60' },
+    { label: 'Total volume', value: `${totalVolume.toLocaleString()} kg`, tint: 'bg-energy-50/60' },
+    { label: 'Duration', value: formatTime(durationSeconds), tint: 'bg-violet-50/60' },
   ];
 
   return (
@@ -40,7 +40,7 @@ export default function WorkoutSummary({
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl bg-ink-50 p-4 text-left">
+            <div key={stat.label} className={`rounded-xl p-4 text-left ${stat.tint}`}>
               <p className="text-xs text-ink-500">{stat.label}</p>
               <p className="mt-1 font-display text-xl font-700 text-ink-900">{stat.value}</p>
             </div>

@@ -14,8 +14,8 @@ export default function TodaySnapshot({ exerciseCount, totalVolume }: TodaySnaps
   const hasActivity = exerciseCount > 0;
 
   return (
-    <div className="card flex flex-col divide-y divide-ink-200/70 sm:flex-row sm:divide-x sm:divide-y-0">
-      <div className="flex flex-1 items-center gap-3 p-4 sm:p-5">
+    <div className="card flex flex-col divide-y divide-ink-200/70 overflow-hidden sm:flex-row sm:divide-x sm:divide-y-0">
+      <div className="flex flex-1 items-center gap-3 bg-aqua-50/40 p-4 sm:p-5">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-aqua-50 text-aqua-600">
           <CalendarCheck className="h-4.5 w-4.5" strokeWidth={2} />
         </span>
@@ -27,7 +27,7 @@ export default function TodaySnapshot({ exerciseCount, totalVolume }: TodaySnaps
         </div>
       </div>
 
-      <div className="flex flex-1 items-center gap-3 p-4 sm:p-5">
+      <div className="flex flex-1 items-center gap-3 bg-violet-50/40 p-4 sm:p-5">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-violet-50 text-violet-600">
           <Calculator className="h-4.5 w-4.5" strokeWidth={2} />
         </span>
@@ -39,7 +39,7 @@ export default function TodaySnapshot({ exerciseCount, totalVolume }: TodaySnaps
         </div>
       </div>
 
-      <div className="flex flex-1 items-center gap-3 p-4 sm:p-5">
+      <div className={`flex flex-1 items-center gap-3 p-4 sm:p-5 ${hasActivity ? 'bg-energy-50/40' : ''}`}>
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${hasActivity ? 'bg-energy-50 text-energy-600' : 'bg-ink-100 text-ink-400'}`}>
           <Flame className="h-4.5 w-4.5" strokeWidth={2} />
         </span>

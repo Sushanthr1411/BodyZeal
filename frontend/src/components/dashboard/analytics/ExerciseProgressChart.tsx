@@ -19,8 +19,9 @@ export default function ExerciseProgressChart({ history }: ExerciseProgressChart
   const pr = activeExercise ? personalRecord(history, activeExercise) : null;
 
   return (
-    <div className="card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="card relative overflow-hidden p-5">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-400/10 blur-3xl" />
+      <div className="relative flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-violet-50 text-violet-600">
             <Trophy className="h-4.5 w-4.5" strokeWidth={2} />

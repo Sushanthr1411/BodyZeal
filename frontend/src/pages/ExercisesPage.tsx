@@ -21,7 +21,8 @@ export default function ExercisesPage() {
       />
       <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mx-auto max-w-7xl">
-          <div className="card p-5">
+          <div className="card relative overflow-hidden p-5">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl" />
             <ExerciseFilters
               equipment={equipment}
               muscleGroup={muscleGroup}
