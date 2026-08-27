@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeader from '@/components/common/PageHeader';
 import BasicProfileStep from '@/components/onboarding/BasicProfileStep';
 import BodyInformationStep from '@/components/onboarding/BodyInformationStep';
 import FitnessProfileStep from '@/components/onboarding/FitnessProfileStep';
@@ -54,19 +56,8 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <header className="border-b border-ink-200/70 bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-energy-700">Account</p>
-            <h1 className="mt-1 font-display text-2xl font-700 tracking-tight text-ink-900">Profile settings</h1>
-          </div>
-          <Link to="/dashboard" className="btn-ghost">
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </Link>
-        </div>
-      </header>
+    <DashboardLayout>
+      <PageHeader title="Settings" description="Manage your basic profile and fitness details." />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -111,6 +102,6 @@ export default function ProfileSettingsPage() {
           </div>
         </form>
       </main>
-    </div>
+    </DashboardLayout>
   );
 }

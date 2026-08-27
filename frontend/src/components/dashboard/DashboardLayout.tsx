@@ -16,9 +16,9 @@ import { getAuthErrorMessage } from '@/lib/authErrors';
 import { loadProfile } from '@/lib/profileStorage';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
-  { label: 'History', icon: History, active: false },
-  { label: 'Exercises', icon: Dumbbell, active: false },
+  { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
+  { label: 'History', icon: History, to: '/history' },
+  { label: 'Exercises', icon: Dumbbell, to: '/exercises' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -70,20 +70,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-ink-400">
             Menu
           </p>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.label}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
-                item.active
-                  ? 'bg-ink-900 text-white'
-                  : 'text-ink-600 hover:bg-ink-100'
-              }`}
-            >
-              <item.icon className="h-4 w-4" strokeWidth={2} />
-              {item.label}
-              {item.active && <ChevronRight className="ml-auto h-4 w-4 text-energy-400" />}
-            </button>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = location.pathname === item.to;
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-ink-900 text-white'
+                    : 'text-ink-600 hover:bg-ink-100'
+                }`}
+              >
+                <item.icon className="h-4 w-4" strokeWidth={2} />
+                {item.label}
+                {active && <ChevronRight className="ml-auto h-4 w-4 text-energy-400" />}
+              </Link>
+            );
+          })}
         </nav>
         <div className="border-t border-ink-200/70 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-ink-50 p-3">
@@ -100,7 +105,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <div className="mt-3 space-y-1">
-            <Link to="/settings" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100">
+            <Link
+              to="/settings"
+              aria-current={location.pathname === '/settings' ? 'page' : undefined}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                location.pathname === '/settings' ? 'bg-ink-100 text-ink-900' : 'text-ink-600 hover:bg-ink-100'
+              }`}
+            >
               <Settings className="h-4 w-4" />
               Settings
             </Link>
@@ -151,24 +162,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
             </div>
             <nav className="space-y-1 p-4">
-              {NAV_ITEMS.map((item) => (
-                <button
-                  key={item.label}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
-                    item.active ? 'bg-ink-900 text-white' : 'text-ink-600 hover:bg-ink-100'
-                  }`}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              ))}
+              {NAV_ITEMS.map((item) => {
+                const active = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                      active ? 'bg-ink-900 text-white' : 'text-ink-600 hover:bg-ink-100'
+                    }`}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
             <div className="border-t border-ink-200/70 p-4">
               <Link
                 to="/settings"
                 onClick={() => setMobileOpen(false)}
-                className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100"
+                aria-current={location.pathname === '/settings' ? 'page' : undefined}
+                className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/settings' ? 'bg-ink-100 text-ink-900' : 'text-ink-600 hover:bg-ink-100'
+                }`}
               >
                 <Settings className="h-4 w-4" />
                 Settings

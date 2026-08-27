@@ -1,10 +1,30 @@
+export type Equipment =
+  | 'Dumbbell'
+  | 'Kettlebell'
+  | 'Barbell / Rod'
+  | 'Resistance Band'
+  | 'Cable Machine'
+  | 'Machine'
+  | 'Bodyweight';
+
+export type MuscleGroup =
+  | 'Chest'
+  | 'Back'
+  | 'Shoulders'
+  | 'Biceps'
+  | 'Triceps'
+  | 'Forearms'
+  | 'Legs'
+  | 'Glutes'
+  | 'Abs / Core'
+  | 'Calves';
+
 export interface Exercise {
   id: string;
   name: string;
-  category: ExerciseCategory;
+  equipment: Equipment;
+  muscleGroup: MuscleGroup;
 }
-
-export type ExerciseCategory = 'Strength' | 'Cardio' | 'Bodyweight';
 
 export interface WorkoutSet {
   id: string;

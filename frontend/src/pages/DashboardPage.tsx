@@ -25,18 +25,22 @@ export default function DashboardPage() {
       <DashboardHeader />
       <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mx-auto max-w-7xl">
-          {/* Top row: summary + volume */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard exerciseCount={entries.length} />
-            <VolumeCard totalVolume={totalVolume} />
+          {/* Primary row: log a set (hero) + rest timer */}
+          <div className="grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <RestTimerCard />
+              <WorkoutEntryCard onAdd={addEntry} />
             </div>
+            <RestTimerCard />
           </div>
 
-          {/* Main grid: entry + history */}
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <WorkoutEntryCard onAdd={addEntry} />
+          {/* Secondary row: quick stats */}
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <SummaryCard exerciseCount={entries.length} />
+            <VolumeCard totalVolume={totalVolume} />
+          </div>
+
+          {/* History */}
+          <div className="mt-4">
             <WorkoutHistoryCard entries={entries} onRemove={removeEntry} />
           </div>
         </div>

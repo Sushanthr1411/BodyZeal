@@ -4,6 +4,8 @@ import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import OnboardingPage from '@/pages/OnboardingPage';
 import DashboardPage from '@/pages/DashboardPage';
+import HistoryPage from '@/pages/HistoryPage';
+import ExercisesPage from '@/pages/ExercisesPage';
 import ProfileSettingsPage from '@/pages/ProfileSettingsPage';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -17,6 +19,8 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/exercises" element={<ExercisesPage />} />
           <Route path="/settings" element={<ProfileSettingsPage />} />
         </Route>
         <Route path="*" element={<HomePage />} />

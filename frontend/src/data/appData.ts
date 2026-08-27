@@ -1,12 +1,3 @@
-import type { Exercise } from '@/types/workout';
-
-export const COMMON_EXERCISES: Exercise[] = [
-  { id: 'squat', name: 'Squat', category: 'Strength' },
-  { id: 'bench-press', name: 'Bench Press', category: 'Strength' },
-  { id: 'pull-up', name: 'Pull-Up', category: 'Bodyweight' },
-  { id: 'run', name: 'Run', category: 'Cardio' },
-];
-
 export const FEATURE_LIST = [
   {
     icon: 'Dumbbell',
