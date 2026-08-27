@@ -3,6 +3,7 @@ import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import DashboardPage from '@/pages/DashboardPage';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function App() {
   return (
@@ -11,7 +12,9 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
         <Route path="*" element={<HomePage />} />
       </Routes>
     </BrowserRouter>
