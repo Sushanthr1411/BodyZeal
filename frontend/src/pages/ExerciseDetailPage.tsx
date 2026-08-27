@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
@@ -16,7 +16,7 @@ import {
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import EmptyState from '@/components/common/EmptyState';
 import { EXERCISES } from '@/data/exercises';
-import { loadRecentWorkouts } from '@/lib/recentWorkouts';
+import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
 import { exerciseProgress, exerciseStats } from '@/utils/analytics';
 
 const RANGES = [
@@ -34,7 +34,16 @@ export default function ExerciseDetailPage() {
   const navigate = useNavigate();
   const [range, setRange] = useState<RangeKey>('30d');
   const [metric, setMetric] = useState<Metric>('weight');
-  const [history] = useState(() => loadRecentWorkouts());
+  const [history, setHistory] = useState<RecentWorkout[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadRecentWorkouts().then((loaded) => {
+      if (!cancelled) setHistory(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const exercise = EXERCISES.find((item) => item.id === id);
 

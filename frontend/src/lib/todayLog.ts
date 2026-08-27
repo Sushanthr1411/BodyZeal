@@ -1,29 +1,28 @@
-// Frontend-only persistence for the Dashboard's "Log a Set" quick-log widget (localStorage),
-// scoped to the current calendar day so it survives reloads without carrying over indefinitely.
+// Backed by the BodyZeal API (GET /api/workouts/today, POST/DELETE
+// /api/workouts/quick-log) instead of localStorage. loadTodayLog/addTodayLog
+// take over saveTodayLog's old whole-array-sync role — each add/remove is
+// now its own call instead of one effect writing the full array on every
+// change.
+import { api } from '@/lib/apiClient';
 import type { WorkoutSet } from '@/types/workout';
 
-const STORAGE_KEY = 'bodyzeal-today-log';
-
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export function loadTodayLog(): WorkoutSet[] {
+export async function loadTodayLog(): Promise<WorkoutSet[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!parsed || parsed.dateKey !== todayKey() || !Array.isArray(parsed.entries)) return [];
-    return parsed.entries as WorkoutSet[];
+    return await api.get<WorkoutSet[]>('/api/workouts/today');
   } catch {
     return [];
   }
 }
 
-export function saveTodayLog(entries: WorkoutSet[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ dateKey: todayKey(), entries }));
-  } catch {
-    // best-effort only
-  }
+export async function addTodayLogEntry(entry: {
+  exerciseId: string;
+  sets: number;
+  reps: number;
+  weight: number;
+}): Promise<WorkoutSet> {
+  return api.post<WorkoutSet>('/api/workouts/quick-log', entry);
+}
+
+export async function removeTodayLogEntry(id: string): Promise<void> {
+  await api.delete(`/api/workouts/quick-log/${id}`);
 }

@@ -9,13 +9,14 @@ import RestTimerCard from '@/components/dashboard/RestTimerCard';
 import WorkoutHistoryCard from '@/components/dashboard/WorkoutHistoryCard';
 import AnalyticsSection from '@/components/dashboard/analytics/AnalyticsSection';
 import type { WorkoutSet } from '@/types/workout';
-import { loadRecentWorkouts } from '@/lib/recentWorkouts';
-import { loadActiveSession } from '@/lib/activeSession';
-import { loadTodayLog, saveTodayLog } from '@/lib/todayLog';
+import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
+import { loadActiveSession, type ActiveSessionSnapshot } from '@/lib/activeSession';
+import { loadTodayLog, addTodayLogEntry, removeTodayLogEntry } from '@/lib/todayLog';
 import { isToday, todaysWorkouts } from '@/utils/analytics';
 import { groupSetsByExercise } from '@/utils/workout';
 import { useAuth } from '@/context/useAuth';
 import { loadProfile } from '@/lib/profileStorage';
+import type { UserProfile } from '@/types/profile';
 
 const sectionMotion = (index: number) => ({
   initial: { opacity: 0, y: 16 },
@@ -26,15 +27,46 @@ const sectionMotion = (index: number) => ({
 export default function DashboardPage() {
   const { user } = useAuth();
   // Quick-log entries from the "Log a Set" widget — persisted per-day so a reload doesn't wipe them.
-  const [entries, setEntries] = useState<WorkoutSet[]>(() => loadTodayLog());
-  const [history] = useState(() => loadRecentWorkouts());
-  const [activeSession] = useState(() => loadActiveSession());
-  const profile = user ? loadProfile(user.uid) : null;
+  const [entries, setEntries] = useState<WorkoutSet[]>([]);
+  const [quickLogError, setQuickLogError] = useState('');
+  const [history, setHistory] = useState<RecentWorkout[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadTodayLog().then((loaded) => {
+      if (!cancelled) setEntries(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const [activeSession, setActiveSession] = useState<ActiveSessionSnapshot | null>(null);
+  useEffect(() => {
+    loadActiveSession().then(setActiveSession);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadRecentWorkouts().then((loaded) => {
+      if (!cancelled) setHistory(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const firstName = (profile?.fullName || user?.displayName || '').split(' ')[0] || undefined;
 
   useEffect(() => {
-    saveTodayLog(entries);
-  }, [entries]);
+    if (!user) return;
+    let cancelled = false;
+    loadProfile(user.uid).then((loaded) => {
+      if (!cancelled) setProfile(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // "Today" should reflect ALL of today's training, not just the quick-log widget: finished
   // routine workouts from today, the in-progress routine session (if started today), and quick-log sets.
@@ -64,12 +96,27 @@ export default function DashboardPage() {
   const exerciseCount = useMemo(() => groupSetsByExercise(allTodaysSets).length, [allTodaysSets]);
   const removableIds = useMemo(() => new Set(entries.map((entry) => entry.id)), [entries]);
 
-  function addEntry(entry: WorkoutSet) {
-    setEntries((current) => [...current, entry]);
+  function addEntry(entry: WorkoutSet & { exerciseId: string }) {
+    setQuickLogError('');
+    setEntries((current) => [...current, entry]); // optimistic
+    addTodayLogEntry({ exerciseId: entry.exerciseId, sets: entry.sets, reps: entry.reps, weight: entry.weight })
+      .then((saved) => {
+        setEntries((current) => current.map((e) => (e.id === entry.id ? saved : e)));
+      })
+      .catch(() => {
+        setEntries((current) => current.filter((e) => e.id !== entry.id)); // rollback
+        setQuickLogError("Couldn't save that set — try again.");
+      });
   }
 
   function removeEntry(id: string) {
-    setEntries((current) => current.filter((entry) => entry.id !== id));
+    setQuickLogError('');
+    const removed = entries.find((entry) => entry.id === id);
+    setEntries((current) => current.filter((entry) => entry.id !== id)); // optimistic
+    removeTodayLogEntry(id).catch(() => {
+      if (removed) setEntries((current) => [...current, removed]); // rollback
+      setQuickLogError("Couldn't remove that entry — try again.");
+    });
   }
 
   return (
@@ -94,6 +141,9 @@ export default function DashboardPage() {
             <p className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold uppercase tracking-wider text-ink-400">
               Log a Set — quick, one-off entry
             </p>
+            {quickLogError && (
+              <p role="alert" className="mb-2 text-sm font-medium text-red-600">{quickLogError}</p>
+            )}
             <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <WorkoutEntryCard onAdd={addEntry} />

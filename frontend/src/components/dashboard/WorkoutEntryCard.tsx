@@ -7,7 +7,7 @@ import { EXERCISES } from '@/data/exercises';
 import { ALL_EQUIPMENT, ALL_MUSCLE_GROUPS, filterExercises, type EquipmentFilter, type MuscleGroupFilter } from '@/utils/exercises';
 import ExercisePickerPopover from '@/components/dashboard/ExercisePickerPopover';
 
-export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet) => void }) {
+export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet & { exerciseId: string }) => void }) {
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>(ALL_MUSCLE_GROUPS);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -39,6 +39,7 @@ export default function WorkoutEntryCard({ onAdd }: { onAdd: (entry: WorkoutSet)
     if (Object.keys(next).length > 0) return;
     onAdd({
       id: crypto.randomUUID(),
+      exerciseId: selectedExercise!.id,
       exerciseName,
       sets: parsedSets,
       reps: parsedReps,

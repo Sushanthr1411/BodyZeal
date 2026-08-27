@@ -21,6 +21,7 @@ export default function CreateRoutinePage() {
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>(ALL_MUSCLE_GROUPS);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const visibleExercises = filterExercises(EXERCISES, equipment, muscleGroup);
   const draftIds = new Set(draft.map((item) => item.exercise.id));
@@ -55,7 +56,7 @@ export default function CreateRoutinePage() {
     });
   }
 
-  function handleSave() {
+  async function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
       setError('Give your routine a name.');
@@ -65,14 +66,22 @@ export default function CreateRoutinePage() {
       setError('Add at least one exercise.');
       return;
     }
+    if (saving) return;
     const slug = trimmedName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const routine: Routine = {
       id: `${slug || 'routine'}-${Date.now().toString(36)}`,
       name: trimmedName,
       exercises: draft.map((item) => ({ exerciseId: item.exercise.id, plannedSets: item.plannedSets })),
     };
-    saveCustomRoutine(routine);
-    navigate('/workout');
+    setSaving(true);
+    setError('');
+    try {
+      await saveCustomRoutine(routine);
+      navigate('/workout');
+    } catch {
+      setError('Could not save this routine. Try again.');
+      setSaving(false);
+    }
   }
 
   return (
@@ -229,9 +238,9 @@ export default function CreateRoutinePage() {
             <button type="button" onClick={() => navigate('/workout')} className="btn-outline flex-1">
               Cancel
             </button>
-            <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={handleSave} className="btn-accent flex-1">
+            <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={handleSave} disabled={saving} className="btn-accent flex-1">
               <Save className="h-4 w-4" />
-              Save Routine
+              {saving ? 'Saving...' : 'Save Routine'}
             </motion.button>
           </div>
         </div>

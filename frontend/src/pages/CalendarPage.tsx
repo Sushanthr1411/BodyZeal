@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Dumbbell, Flame, ListChecks } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -19,7 +19,16 @@ function intensityColor(count: number): string {
 }
 
 export default function CalendarPage() {
-  const [history] = useState(() => loadRecentWorkouts());
+  const [history, setHistory] = useState<RecentWorkout[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadRecentWorkouts().then((loaded) => {
+      if (!cancelled) setHistory(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [viewDate, setViewDate] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);

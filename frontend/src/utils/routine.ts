@@ -6,8 +6,15 @@ import type { Exercise, WorkoutSet } from '@/types/workout';
  */
 export type PlannedSetsMap = Record<string, number>;
 
+// Sums each matching entry's `.sets` count rather than counting entries —
+// under the backend's aggregate logging model (Phase 3C: one log-set call =
+// one row, however many sets it represents), an entry no longer means "one
+// set performed". Counting rows would silently under-report progress toward
+// `plannedSets` now that "3 sets" can arrive as a single row instead of 3.
 export function loggedSetCount(exercise: Exercise, entries: WorkoutSet[]): number {
-  return entries.filter((entry) => entry.exerciseName === exercise.name).length;
+  return entries
+    .filter((entry) => entry.exerciseName === exercise.name)
+    .reduce((total, entry) => total + entry.sets, 0);
 }
 
 export function isExerciseComplete(exercise: Exercise, entries: WorkoutSet[], plannedSets: PlannedSetsMap): boolean {
