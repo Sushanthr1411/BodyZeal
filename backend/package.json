@@ -1,0 +1,39 @@
+{
+  "name": "bodyzeal-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BodyZeal API — Express + TypeScript + Prisma, deployed to Cloud Run.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p prisma/tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+    "test": "tsx --env-file=.env --test test/profile.test.ts test/exercise.test.ts test/routine.test.ts test/session.test.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "firebase-admin": "^12.7.0",
+    "helmet": "^8.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.16.11",
+    "prisma": "^5.20.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
