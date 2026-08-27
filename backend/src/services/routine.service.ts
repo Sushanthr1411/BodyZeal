@@ -128,5 +128,18 @@ export async function updateRoutine(
 
 export async function deleteRoutine(userId: string, routineId: string): Promise<void> {
   await assertOwnedCustomRoutine(userId, routineId);
+
+  // The routineId FK on WorkoutSession is ON DELETE SET NULL, so this delete
+  // would otherwise succeed silently and orphan the routine name off of a
+  // user's own workout history. Blocking it with a clear 409 is better than
+  // either a surprise 500 or quietly losing that link — checked explicitly
+  // rather than relying on a schema change.
+  const sessionCount = await prisma.workoutSession.count({ where: { routineId } });
+  if (sessionCount > 0) {
+    throw new AppError(409, 'CONFLICT', 'This routine has workout history and cannot be deleted', [
+      { field: 'id', issue: `routine is referenced by ${sessionCount} workout session(s)` },
+    ]);
+  }
+
   await prisma.routine.delete({ where: { id: routineId } }); // cascades to routine_exercises
 }

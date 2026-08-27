@@ -8,6 +8,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
   FRONTEND_ORIGINS: z
     .string()
     .min(1, 'FRONTEND_ORIGINS is required')
@@ -25,6 +26,7 @@ export type Env = {
   DATABASE_URL: string;
   FIREBASE_PROJECT_ID: string;
   GOOGLE_APPLICATION_CREDENTIALS?: string;
+  GEMINI_API_KEY: string;
   FRONTEND_ORIGINS: string[];
 };
 

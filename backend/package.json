@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit && tsc --noEmit -p prisma/tsconfig.json && tsc --noEmit -p test/tsconfig.json",
-    "test": "tsx --env-file=.env --test test/profile.test.ts test/exercise.test.ts test/routine.test.ts test/session.test.ts",
+    "test": "tsx --env-file=.env --test test/profile.test.ts test/exercise.test.ts test/routine.test.ts test/session.test.ts test/workout.test.ts test/analytics.test.ts test/assistant.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
@@ -21,6 +21,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.19.0",
     "@prisma/client": "^5.20.0",
     "cors": "^2.8.5",
     "express": "^5.0.1",

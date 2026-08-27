@@ -363,11 +363,18 @@ test('a rejected set-log leaves no WorkoutSet row behind', async () => {
 
 // ---- Seed data integrity ----
 
-test('seed counts are unchanged after the full session test run', async () => {
+test('seed data is unchanged after the full session test run', async () => {
+  // Scoped to the immutable seeded data only — the total routine/
+  // routine_exercise count isn't asserted here, since a real (non-test)
+  // account on this database may legitimately hold its own custom
+  // routines (e.g. from manual verification) that this suite must not
+  // require to be absent.
   const exercises = await prisma.exercise.count();
-  const routines = await prisma.routine.count();
-  const routineExercises = await prisma.routineExercise.count();
+  const systemRoutines = await prisma.routine.count({ where: { isSystemDefault: true } });
+  const systemRoutineExercises = await prisma.routineExercise.count({
+    where: { routine: { isSystemDefault: true } },
+  });
   assert.equal(exercises, 71);
-  assert.equal(routines, 4);
-  assert.equal(routineExercises, 20);
+  assert.equal(systemRoutines, 4);
+  assert.equal(systemRoutineExercises, 20);
 });

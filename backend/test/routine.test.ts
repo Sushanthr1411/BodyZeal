@@ -185,6 +185,30 @@ test("another user cannot delete someone else's custom routine", async () => {
   assert.ok(row, "A's routine must still exist");
 });
 
+test('deleting a routine referenced by a workout session returns 409, not 500 or a silent success', async () => {
+  const { body: routine } = await createRoutineAs(UID_A, {
+    name: 'Referenced By History',
+    exercises: [{ exerciseId: 'plank', plannedSets: 3 }],
+  });
+  const startRes = await fetch(`${baseUrl}/api/sessions`, {
+    method: 'POST',
+    headers: jsonHeaders(UID_A),
+    body: JSON.stringify({ routineId: routine.id, name: 'Referenced By History' }),
+  });
+  const session = (await startRes.json()) as any;
+  await fetch(`${baseUrl}/api/sessions/${session.id}/finish`, { method: 'POST', headers: testAuthHeader(UID_A) });
+
+  const res = await fetch(`${baseUrl}/api/routines/${routine.id}`, { method: 'DELETE', headers: testAuthHeader(UID_A) });
+  assert.equal(res.status, 409);
+  const body = (await res.json()) as any;
+  assert.equal(body.error.code, 'CONFLICT');
+
+  const stillThere = await prisma.routine.findUnique({ where: { id: routine.id } });
+  assert.ok(stillThere, 'the routine must not have been deleted');
+  const sessionRow = await prisma.workoutSession.findUnique({ where: { id: session.id } });
+  assert.equal(sessionRow!.routineId, routine.id, "the finished session's routine link must be untouched");
+});
+
 // ---- Validation ----
 
 test('an unknown exerciseId is rejected', async () => {

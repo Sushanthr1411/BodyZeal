@@ -1,6 +1,8 @@
 import http from 'node:http';
+import { FinishReason, type GenerateContentParameters, type GenerateContentResponse } from '@google/genai';
 import { createApp } from '../../src/app';
 import { firebaseAuth } from '../../src/config/firebaseAdmin';
+import { gemini } from '../../src/config/geminiClient';
 
 /**
  * Starts the real Express app (real Prisma client, real DB from
@@ -50,4 +52,29 @@ export function installFakeVerifyIdToken() {
 
 export function testAuthHeader(uid: string, email = `${uid}@test.bodyzeal`) {
   return { Authorization: `Bearer test-token:${uid}:${email}` };
+}
+
+/**
+ * Replaces `gemini.models.generateContent` with a fake for the duration of a
+ * test — same monkey-patch pattern as installFakeVerifyIdToken above.
+ * Automated tests must never make a real, billed Gemini API call.
+ */
+export function installFakeGeminiGenerateContent(
+  impl: (params: GenerateContentParameters) => Promise<Partial<GenerateContentResponse>> | Partial<GenerateContentResponse>,
+) {
+  const original = gemini.models.generateContent.bind(gemini.models);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (gemini.models as any).generateContent = async (params: GenerateContentParameters) => impl(params);
+  return () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gemini.models as any).generateContent = original;
+  };
+}
+
+export function fakeGeminiResponse(text: string, finishReason: FinishReason = FinishReason.STOP): Partial<GenerateContentResponse> {
+  return {
+    text,
+    candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason }],
+    usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 10 } as GenerateContentResponse['usageMetadata'],
+  };
 }

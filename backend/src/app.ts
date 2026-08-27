@@ -9,6 +9,9 @@ import { profileRouter } from './routes/profile.routes';
 import { exerciseRouter } from './routes/exercise.routes';
 import { routineRouter } from './routes/routine.routes';
 import { sessionRouter } from './routes/session.routes';
+import { workoutRouter } from './routes/workout.routes';
+import { analyticsRouter } from './routes/analytics.routes';
+import { assistantRouter } from './routes/assistant.routes';
 
 export function createApp() {
   const app = express();
@@ -28,9 +31,11 @@ export function createApp() {
   app.use(exerciseRouter);
   app.use(routineRouter);
   app.use(sessionRouter);
+  app.use(workoutRouter);
+  app.use(analyticsRouter);
+  app.use(assistantRouter);
 
-  // Remaining business routes (workout history/quick-log, dashboard,
-  // analytics) come after Phase 3C approval.
+  // Frontend wiring and GCP deployment come after Phase 3F approval.
 
   app.use(notFoundHandler);
   app.use(errorHandler);

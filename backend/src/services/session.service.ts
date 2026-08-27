@@ -43,7 +43,7 @@ export type FinishedSessionResponse = {
   durationSeconds: number;
 };
 
-function toFrontendSet(row: SetRow & { exercise: ExerciseRow }): FrontendWorkoutSet {
+export function toFrontendSet(row: SetRow & { exercise: ExerciseRow }): FrontendWorkoutSet {
   return {
     id: row.id,
     exerciseName: row.exercise.name,

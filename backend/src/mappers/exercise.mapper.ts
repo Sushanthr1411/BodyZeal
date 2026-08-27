@@ -61,3 +61,7 @@ export function toFrontendExercise(row: ExerciseRow): FrontendExercise {
     muscleGroup: MUSCLE_GROUP_OUT[row.muscleGroup],
   };
 }
+
+export function toFrontendMuscleGroup(group: MuscleGroup): FrontendMuscleGroup {
+  return MUSCLE_GROUP_OUT[group];
+}
