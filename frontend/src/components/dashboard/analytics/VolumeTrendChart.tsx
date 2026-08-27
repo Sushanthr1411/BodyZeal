@@ -31,20 +31,20 @@ export default function VolumeTrendChart({ data }: VolumeTrendChartProps) {
       <div className="mt-4 h-44">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barCategoryGap={12}>
-            <CartesianGrid vertical={false} stroke="#E9EBEE" />
+            <CartesianGrid vertical={false} stroke="#E1D9C7" />
             <XAxis
               dataKey="label"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: '#828A96' }}
+              tick={{ fontSize: 11, fill: '#83765A' }}
             />
             <Tooltip
-              cursor={{ fill: '#F5F6F7' }}
-              contentStyle={{ borderRadius: 10, border: '1px solid #E9EBEE', fontSize: 12, boxShadow: '0 8px 24px -12px rgba(16,18,21,0.18)' }}
-              labelStyle={{ color: '#16181D', fontWeight: 600, marginBottom: 2 }}
+              cursor={{ fill: '#F0EBDF' }}
+              contentStyle={{ borderRadius: 10, border: '1px solid #E1D9C7', fontSize: 12, boxShadow: '0 8px 24px -12px rgba(29,24,17,0.2)' }}
+              labelStyle={{ color: '#1D1811', fontWeight: 600, marginBottom: 2 }}
               formatter={(value) => [`${Number(value).toLocaleString()} kg`, 'Volume']}
             />
-            <Bar dataKey="volume" fill="#84CC16" radius={[4, 4, 0, 0]} maxBarSize={36} />
+            <Bar dataKey="volume" fill="#9FC232" radius={[4, 4, 0, 0]} maxBarSize={36} />
           </BarChart>
         </ResponsiveContainer>
       </div>

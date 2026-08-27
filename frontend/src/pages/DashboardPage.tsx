@@ -10,6 +10,8 @@ import WorkoutHistoryCard from '@/components/dashboard/WorkoutHistoryCard';
 import AnalyticsSection from '@/components/dashboard/analytics/AnalyticsSection';
 import type { WorkoutSet } from '@/types/workout';
 import { loadRecentWorkouts } from '@/lib/recentWorkouts';
+import { useAuth } from '@/context/useAuth';
+import { loadProfile } from '@/lib/profileStorage';
 
 const sectionMotion = (index: number) => ({
   initial: { opacity: 0, y: 18 },
@@ -18,9 +20,12 @@ const sectionMotion = (index: number) => ({
 });
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [entries, setEntries] = useState<WorkoutSet[]>([]);
   const [history] = useState(() => loadRecentWorkouts());
   const totalVolume = entries.reduce((total, entry) => total + entry.volume, 0);
+  const profile = user ? loadProfile(user.uid) : null;
+  const firstName = (profile?.fullName || user?.displayName || '').split(' ')[0] || undefined;
 
   function addEntry(entry: WorkoutSet) {
     setEntries((current) => [...current, entry]);
@@ -32,21 +37,21 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <DashboardHeader />
+      <DashboardHeader firstName={firstName} />
       <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mx-auto max-w-7xl">
-          {/* Primary row: log a set (hero) + rest timer */}
-          <motion.div {...sectionMotion(0)} className="grid gap-4 lg:grid-cols-3">
+          {/* Today's status — the two numbers that answer "what did I accomplish today" */}
+          <motion.div {...sectionMotion(0)} className="grid gap-4 sm:grid-cols-2">
+            <SummaryCard exerciseCount={entries.length} />
+            <VolumeCard totalVolume={totalVolume} />
+          </motion.div>
+
+          {/* Primary action: log a set, plus the rest timer that supports the same flow */}
+          <motion.div {...sectionMotion(1)} className="mt-4 grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <WorkoutEntryCard onAdd={addEntry} />
             </div>
             <RestTimerCard />
-          </motion.div>
-
-          {/* Secondary row: quick stats */}
-          <motion.div {...sectionMotion(1)} className="mt-4 grid gap-4 sm:grid-cols-2">
-            <SummaryCard exerciseCount={entries.length} />
-            <VolumeCard totalVolume={totalVolume} />
           </motion.div>
 
           {/* Today's activity */}
@@ -54,7 +59,7 @@ export default function DashboardPage() {
             <WorkoutHistoryCard entries={entries} onRemove={removeEntry} />
           </motion.div>
 
-          {/* Analytics — trends from finished workouts */}
+          {/* Insights — trends from finished workouts */}
           <motion.div {...sectionMotion(3)} className="mt-6">
             <AnalyticsSection history={history} />
           </motion.div>

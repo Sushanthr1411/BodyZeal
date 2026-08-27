@@ -72,20 +72,20 @@ export default function ExerciseProgressChart({ history }: ExerciseProgressChart
           <div className="mt-4 h-44">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={points} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="#E9EBEE" />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#828A96' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#828A96' }} width={34} />
+                <CartesianGrid vertical={false} stroke="#E1D9C7" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#83765A' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#83765A' }} width={34} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 10, border: '1px solid #E9EBEE', fontSize: 12, boxShadow: '0 8px 24px -12px rgba(16,18,21,0.18)' }}
-                  labelStyle={{ color: '#16181D', fontWeight: 600, marginBottom: 2 }}
+                  contentStyle={{ borderRadius: 10, border: '1px solid #E1D9C7', fontSize: 12, boxShadow: '0 8px 24px -12px rgba(29,24,17,0.2)' }}
+                  labelStyle={{ color: '#1D1811', fontWeight: 600, marginBottom: 2 }}
                   formatter={(value) => [`${Number(value)} kg`, 'Top weight']}
                 />
                 <Line
                   type="monotone"
                   dataKey="topWeight"
-                  stroke="#4D7C0F"
+                  stroke="#8F4F7E"
                   strokeWidth={2}
-                  dot={{ r: 4, fill: '#4D7C0F', strokeWidth: 0 }}
+                  dot={{ r: 4, fill: '#8F4F7E', strokeWidth: 0 }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>

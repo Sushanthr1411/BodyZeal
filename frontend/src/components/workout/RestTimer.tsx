@@ -10,7 +10,7 @@ export default function RestTimer() {
   const { seconds, running, start, pause, reset } = useRestTimer();
   const progress = seconds / DEFAULT_REST_SECONDS;
   const low = seconds > 0 && seconds <= 10;
-  const ringColor = low ? '#eb6834' : '#84CC16';
+  const ringColor = low ? '#C96936' : '#83A31E';
 
   return (
     <div className="card relative overflow-hidden p-5">
@@ -38,7 +38,7 @@ export default function RestTimer() {
             />
           )}
           <svg width="128" height="128" viewBox="0 0 128 128" className="relative -rotate-90">
-            <circle cx="64" cy="64" r={RADIUS} fill="none" stroke="#E9EBEE" strokeWidth="8" />
+            <circle cx="64" cy="64" r={RADIUS} fill="none" stroke="#E1D9C7" strokeWidth="8" />
             <motion.circle
               cx="64"
               cy="64"

@@ -4,10 +4,10 @@ import type { FrequencyDay } from '@/utils/analytics';
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function intensityColor(count: number): string {
-  if (count <= 0) return '#E9EBEE';
-  if (count === 1) return '#BEF264';
-  if (count === 2) return '#84CC16';
-  return '#4D7C0F';
+  if (count <= 0) return '#E1D9C7';
+  if (count === 1) return '#D3E68C';
+  if (count === 2) return '#9FC232';
+  return '#526615';
 }
 
 type FrequencyHeatmapProps = {

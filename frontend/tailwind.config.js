@@ -4,41 +4,48 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Warm stone neutral — replaces the old cool gray "ink" for a softer,
+        // more editorial paper-like base instead of a stark dashboard gray.
         ink: {
-          50: '#F5F6F7',
-          100: '#E9EBEE',
-          200: '#D2D6DC',
-          300: '#AEB4BD',
-          400: '#828A96',
-          500: '#626A76',
-          600: '#4D545F',
-          700: '#3F444D',
-          800: '#262A31',
-          900: '#16181D',
-          950: '#0C0D10',
+          50: '#F9F7F2',
+          100: '#F0EBDF',
+          200: '#E1D9C7',
+          300: '#C7BC9F',
+          400: '#A69874',
+          500: '#83765A',
+          600: '#645844',
+          700: '#4A4132',
+          800: '#312A20',
+          900: '#1D1811',
+          950: '#100D08',
         },
+        // Brand accent — refined olive-lime. Less neon than the old #84CC16,
+        // reads as premium/organic instead of gaming-green.
         energy: {
-          50: '#F7FEE7',
-          100: '#ECFCCB',
-          200: '#D9F99D',
-          300: '#BEF264',
-          400: '#A3E635',
-          500: '#84CC16',
-          600: '#65A30D',
-          700: '#4D7C0F',
-          800: '#3F6212',
-          900: '#365314',
+          50: '#F6FAE7',
+          100: '#E9F3C4',
+          200: '#D3E68C',
+          300: '#B9D558',
+          400: '#9FC232',
+          500: '#83A31E',
+          600: '#698019',
+          700: '#526615',
+          800: '#3F4F14',
+          900: '#333F13',
         },
-        // Accent family — same hues already used in Dashboard analytics, now also
-        // used for card identity/icon treatments so the Dashboard reads as more
-        // than one color without introducing a second, unrelated palette.
-        sky: { 50: '#EAF3FC', 400: '#5598E7', 500: '#2a78d6', 600: '#1c5cab' },
-        coral: { 50: '#FDEEE7', 400: '#F0916A', 500: '#eb6834', 600: '#c9531f' },
-        violet: { 50: '#EFEDFA', 400: '#8172D6', 500: '#4a3aa7', 600: '#392C82' },
-        aqua: { 50: '#E6F6F0', 400: '#3FC694', 500: '#1baf7a', 600: '#158F63' },
+        // Supporting accent family — one warm (ember), two cool (indigo, teal),
+        // one deep (plum) — used for card identity, chart categories, and to
+        // keep the interface from reading as monochromatic.
+        sky: { 50: '#EEF0FA', 400: '#7C87D9', 500: '#565FBE', 600: '#42499B' },
+        coral: { 50: '#FBEEE5', 400: '#E2895A', 500: '#C96936', 600: '#A6521F' },
+        violet: { 50: '#F6EEF3', 400: '#B473A0', 500: '#8F4F7E', 600: '#6E3B62' },
+        aqua: { 50: '#E7F6F1', 400: '#49B79B', 500: '#28937A', 600: '#1E7361' },
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        // Fraunces (editorial serif, optical-size aware) for headings/display
+        // figures — pairs with Inter body copy for a premium-product feel
+        // instead of the tech-dashboard look of two grotesk sans faces.
+        display: ['"Fraunces"', 'ui-serif', 'Georgia', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
@@ -50,13 +57,13 @@ export default {
       },
       borderRadius: {
         xl: '0.875rem',
-        '2xl': '1.25rem',
-        '3xl': '1.75rem',
+        '2xl': '1.375rem',
+        '3xl': '1.875rem',
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(16,18,21,0.04), 0 8px 24px -12px rgba(16,18,21,0.12)',
-        lift: '0 2px 4px rgba(16,18,21,0.05), 0 24px 48px -20px rgba(16,18,21,0.22)',
-        glow: '0 0 0 1px rgba(163,230,53,0.25), 0 12px 40px -12px rgba(132,204,22,0.45)',
+        soft: '0 1px 2px rgba(29,24,17,0.05), 0 8px 24px -12px rgba(29,24,17,0.14)',
+        lift: '0 2px 4px rgba(29,24,17,0.06), 0 24px 48px -20px rgba(29,24,17,0.24)',
+        glow: '0 0 0 1px rgba(159,194,50,0.3), 0 12px 40px -12px rgba(131,163,30,0.5)',
       },
       keyframes: {
         'fade-up': {

@@ -10,7 +10,9 @@ export default function RestTimerCard() {
   const { seconds, running, toggle, reset } = useRestTimer();
   const progress = seconds / DEFAULT_REST_SECONDS;
   const low = seconds > 0 && seconds <= 10;
-  const ringColor = low ? '#eb6834' : '#84CC16';
+  const done = seconds === 0;
+  const ringColor = low ? '#C96936' : '#83A31E';
+  const statusLabel = done ? 'Rest complete' : running ? 'Resting' : 'Ready';
 
   return (
     <div className="card relative overflow-hidden p-5">
@@ -38,7 +40,7 @@ export default function RestTimerCard() {
             />
           )}
           <svg width="128" height="128" viewBox="0 0 128 128" className="relative -rotate-90">
-            <circle cx="64" cy="64" r={RADIUS} fill="none" stroke="#E9EBEE" strokeWidth="8" />
+            <circle cx="64" cy="64" r={RADIUS} fill="none" stroke="#E1D9C7" strokeWidth="8" />
             <motion.circle
               cx="64"
               cy="64"
@@ -52,15 +54,18 @@ export default function RestTimerCard() {
               transition={{ duration: 0.6, ease: 'linear' }}
             />
           </svg>
-          <motion.p
-            key={seconds}
-            initial={{ opacity: 0.4, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25 }}
-            className="absolute font-display text-3xl font-700 tabular-nums text-ink-900"
-          >
-            {formatTime(seconds)}
-          </motion.p>
+          <div className="absolute flex flex-col items-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-400">{statusLabel}</p>
+            <motion.p
+              key={seconds}
+              initial={{ opacity: 0.4, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25 }}
+              className="font-display text-3xl font-semibold tabular-nums text-ink-900"
+            >
+              {formatTime(seconds)}
+            </motion.p>
+          </div>
         </div>
 
         <div className="mt-5 grid w-full grid-cols-2 gap-2">

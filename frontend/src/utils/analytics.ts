@@ -114,6 +114,39 @@ export function exerciseProgress(history: RecentWorkout[], exerciseName: string)
   return points;
 }
 
+export type HistoryGroup = { dateKey: string; label: string; workouts: RecentWorkout[]; totalVolume: number };
+
+/** Finished workouts grouped by calendar day, most recent day first. */
+export function groupWorkoutsByDate(history: RecentWorkout[]): HistoryGroup[] {
+  const order: string[] = [];
+  const buckets = new Map<string, RecentWorkout[]>();
+  const sorted = history.slice().sort((a, b) => (a.finishedAt < b.finishedAt ? 1 : -1));
+  for (const workout of sorted) {
+    const key = dateKey(workout.finishedAt);
+    if (!buckets.has(key)) {
+      buckets.set(key, []);
+      order.push(key);
+    }
+    buckets.get(key)!.push(workout);
+  }
+  const today = dateKey(new Date().toISOString());
+  const yesterday = dateKey(new Date(Date.now() - DAY_MS).toISOString());
+  return order.map((key) => {
+    const workouts = buckets.get(key)!;
+    const label = key === today
+      ? 'Today'
+      : key === yesterday
+        ? 'Yesterday'
+        : new Date(key).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    return {
+      dateKey: key,
+      label,
+      workouts,
+      totalVolume: workouts.reduce((sum, w) => sum + w.totalVolume, 0),
+    };
+  });
+}
+
 export type PersonalRecord = { exerciseName: string; maxWeight: number; maxVolumeSession: number };
 
 export function personalRecord(history: RecentWorkout[], exerciseName: string): PersonalRecord | null {

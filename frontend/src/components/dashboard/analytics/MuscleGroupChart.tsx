@@ -3,8 +3,8 @@ import type { MuscleGroupSlice } from '@/utils/analytics';
 import EmptyState from '@/components/common/EmptyState';
 
 // Validated categorical palette (dataviz skill) — fixed order, never cycled.
-const CATEGORY_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'];
-const OTHER_COLOR = '#AEB4BD';
+const CATEGORY_COLORS = ['#565FBE', '#C96936', '#28937A', '#8F4F7E', '#C9971E', '#B4577B'];
+const OTHER_COLOR = '#C7BC9F';
 
 type MuscleGroupChartProps = {
   data: MuscleGroupSlice[];
