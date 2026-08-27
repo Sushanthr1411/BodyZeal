@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   History,
@@ -11,6 +11,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import Brand from '@/components/Brand';
+import { useAuth } from '@/context/useAuth';
+import { getAuthErrorMessage } from '@/lib/authErrors';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, active: true },
@@ -20,7 +22,24 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    setLogoutError('');
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      setLogoutError(getAuthErrorMessage(error, 'Unable to log out. Try again.'));
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -65,13 +84,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Settings className="h-4 w-4" />
               Settings
             </button>
-            <Link
-              to="/"
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100"
             >
               <LogOut className="h-4 w-4" />
-              Back to home
-            </Link>
+              {loggingOut ? 'Logging out...' : 'Log out'}
+            </button>
+            {logoutError && <p role="alert" className="mt-2 px-3 text-xs text-red-600">{logoutError}</p>}
           </div>
         </div>
       </aside>
@@ -123,13 +145,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))}
             </nav>
             <div className="border-t border-ink-200/70 p-4">
-              <Link
-                to="/"
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100"
               >
                 <LogOut className="h-4 w-4" />
-                Back to home
-              </Link>
+                {loggingOut ? 'Logging out...' : 'Log out'}
+              </button>
+              {logoutError && <p role="alert" className="mt-2 px-3 text-xs text-red-600">{logoutError}</p>}
             </div>
           </div>
         </div>

@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
+import { useAuth } from '@/context/useAuth';
+import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   function validate() {
@@ -28,15 +32,19 @@ export default function LoginForm() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate()) return;
+    if (submitting || !validate()) return;
     setSubmitting(true);
-    // Placeholder for future authentication flow
-    setTimeout(() => {
-      setSubmitting(false);
+    setAuthError('');
+    try {
+      await login(email.trim(), password, remember);
       navigate('/dashboard');
-    }, 600);
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error, 'Unable to log in. Try again.'));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -135,6 +143,12 @@ export default function LoginForm() {
           {submitting ? 'Signing in...' : 'Log in'}
           {!submitting && <ArrowRight className="h-4 w-4" />}
         </button>
+        {authError && (
+          <p role="alert" className="flex items-center gap-1.5 text-xs text-red-600">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {authError}
+          </p>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-ink-500">
@@ -145,7 +159,7 @@ export default function LoginForm() {
       </p>
 
       <p className="mt-4 rounded-lg bg-ink-100/70 px-3 py-2 text-center text-xs text-ink-500">
-        Authentication is not yet active. Logging in opens the dashboard preview.
+        Sign in securely with your Firebase account.
       </p>
     </AuthLayout>
   );

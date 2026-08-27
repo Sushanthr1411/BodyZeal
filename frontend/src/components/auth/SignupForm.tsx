@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserRound, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
+import { useAuth } from '@/context/useAuth';
+import { getAuthErrorMessage } from '@/lib/authErrors';
 
 type SignupErrors = {
   name?: string;
@@ -12,6 +14,7 @@ type SignupErrors = {
 
 export default function SignupForm() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +22,7 @@ export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<SignupErrors>({});
+  const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   function validate() {
@@ -45,14 +49,19 @@ export default function SignupForm() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate()) return;
+    if (submitting || !validate()) return;
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    setAuthError('');
+    try {
+      await signup(email.trim(), password);
       navigate('/dashboard');
-    }, 600);
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error, 'Unable to create your account. Try again.'));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function updateField(field: keyof SignupErrors, value: string, setter: (value: string) => void) {
@@ -138,6 +147,12 @@ export default function SignupForm() {
           {submitting ? 'Creating account...' : 'Create account'}
           {!submitting && <ArrowRight className="h-4 w-4" />}
         </button>
+        {authError && (
+          <p role="alert" className="flex items-center gap-1.5 text-xs text-red-600">
+            <AlertCircle className="h-3.5 w-3.5" />
+            {authError}
+          </p>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-ink-500">
@@ -148,7 +163,7 @@ export default function SignupForm() {
       </p>
 
       <p className="mt-4 rounded-lg bg-ink-100/70 px-3 py-2 text-center text-xs text-ink-500">
-        Account creation is not yet active. Submitting opens the dashboard preview.
+        Your account is secured with Firebase Authentication.
       </p>
     </AuthLayout>
   );

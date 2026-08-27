@@ -16,7 +16,7 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-2 md:flex">
           <Link
-            to="/signup"
+            to="/login"
             className="btn-ghost text-sm"
             state={{ from: location.pathname }}
           >
@@ -41,7 +41,7 @@ export default function Navbar() {
         <div className="border-t border-ink-200/60 bg-ink-50 px-4 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-2">
             <Link
-              to="/signup"
+              to="/login"
               className="btn-outline w-full"
               state={{ from: location.pathname }}
               onClick={() => setOpen(false)}
@@ -49,7 +49,7 @@ export default function Navbar() {
               Log in
             </Link>
             <Link
-              to="/login"
+              to="/signup"
               className="btn-accent w-full"
               state={{ from: location.pathname }}
               onClick={() => setOpen(false)}
