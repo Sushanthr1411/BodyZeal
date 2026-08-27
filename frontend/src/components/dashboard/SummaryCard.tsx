@@ -1,6 +1,6 @@
 import { CalendarCheck } from 'lucide-react';
 
-export default function SummaryCard() {
+export default function SummaryCard({ exerciseCount }: { exerciseCount: number }) {
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between">
@@ -15,12 +15,12 @@ export default function SummaryCard() {
         </div>
       </div>
       <div className="mt-5">
-        <p className="font-display text-4xl font-700 text-ink-900">0</p>
+        <p className="font-display text-4xl font-700 text-ink-900">{exerciseCount}</p>
         <p className="mt-1 text-sm text-ink-500">exercises completed today</p>
       </div>
       <div className="mt-4 rounded-lg bg-ink-50 px-3 py-2.5">
         <p className="text-xs text-ink-500">
-          Start logging to see today's total update here.
+          {exerciseCount === 0 ? 'Start logging to see today\'s total update here.' : 'Exercises logged today.'}
         </p>
       </div>
     </div>

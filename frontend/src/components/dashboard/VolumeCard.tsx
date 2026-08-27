@@ -1,6 +1,6 @@
 import { Calculator } from 'lucide-react';
 
-export default function VolumeCard() {
+export default function VolumeCard({ totalVolume }: { totalVolume: number }) {
   return (
     <div className="card p-5">
       <div className="flex items-center gap-2">
@@ -13,7 +13,7 @@ export default function VolumeCard() {
         </div>
       </div>
       <div className="mt-5">
-        <p className="font-display text-4xl font-700 text-ink-900">0</p>
+        <p className="font-display text-4xl font-700 text-ink-900">{totalVolume.toLocaleString()}</p>
         <p className="mt-1 text-sm text-ink-500">kg total volume today</p>
       </div>
       <div className="mt-4 flex items-center gap-2 rounded-lg bg-ink-50 px-3 py-2.5">
