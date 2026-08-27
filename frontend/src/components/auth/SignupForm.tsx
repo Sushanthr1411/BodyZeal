@@ -55,8 +55,8 @@ export default function SignupForm() {
     setSubmitting(true);
     setAuthError('');
     try {
-      await signup(email.trim(), password);
-      navigate('/dashboard');
+      await signup(email.trim(), password, name.trim());
+      navigate('/onboarding');
     } catch (error) {
       setAuthError(getAuthErrorMessage(error, 'Unable to create your account. Try again.'));
     } finally {

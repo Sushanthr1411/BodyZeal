@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
 import Brand from '@/components/Brand';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
+import { loadProfile } from '@/lib/profileStorage';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, active: true },
@@ -26,7 +27,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [profile, setProfile] = useState(() => user ? loadProfile(user.uid) : null);
+
+  useEffect(() => {
+    setProfile(user ? loadProfile(user.uid) : null);
+  }, [user]);
+
+  const displayName = profile?.fullName || user?.displayName || user?.email?.split('@')[0] || 'Athlete';
+  const email = user?.email || 'Signed in';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 
   async function handleLogout() {
     if (loggingOut) return;
@@ -71,19 +87,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
         <div className="border-t border-ink-200/70 p-4">
           <div className="flex items-center gap-3 rounded-xl bg-ink-50 p-3">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-ink-900 text-sm font-700 text-energy-400">
-              A
-            </span>
+            {profile?.profilePhoto ? (
+              <img src={profile.profilePhoto} alt="" className="h-9 w-9 rounded-lg object-cover" />
+            ) : (
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-ink-900 text-sm font-700 text-energy-400">
+                {initials}
+              </span>
+            )}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-ink-900">Athlete</p>
-              <p className="truncate text-xs text-ink-500">Not signed in</p>
+              <p className="truncate text-sm font-semibold text-ink-900">{displayName}</p>
+              <p className="truncate text-xs text-ink-500">{email}</p>
             </div>
           </div>
           <div className="mt-3 space-y-1">
-            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100">
+            <Link to="/settings" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100">
               <Settings className="h-4 w-4" />
               Settings
-            </button>
+            </Link>
             <button
               type="button"
               onClick={handleLogout}
@@ -145,6 +165,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))}
             </nav>
             <div className="border-t border-ink-200/70 p-4">
+              <Link
+                to="/settings"
+                onClick={() => setMobileOpen(false)}
+                className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-600 hover:bg-ink-100"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}

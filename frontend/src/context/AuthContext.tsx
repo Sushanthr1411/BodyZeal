@@ -6,6 +6,7 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { useEffect, useState } from 'react';
@@ -34,9 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
-  async function signup(email: string, password: string) {
+  async function signup(email: string, password: string, displayName?: string) {
     if (!auth) throw new Error('Firebase authentication is not configured.');
-    await createUserWithEmailAndPassword(auth, email, password);
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    if (displayName?.trim()) {
+      await updateProfile(credential.user, { displayName: displayName.trim() });
+    }
   }
 
   async function logout() {
