@@ -8,7 +8,7 @@ import ExerciseFilters from '@/components/exercises/ExerciseFilters';
 import ExerciseList from '@/components/exercises/ExerciseList';
 import { EXERCISES } from '@/data/exercises';
 import { ALL_EQUIPMENT, ALL_MUSCLE_GROUPS, filterExercises, type EquipmentFilter, type MuscleGroupFilter } from '@/utils/exercises';
-import { saveCustomRoutine } from '@/lib/customRoutines';
+import { saveCustomRoutine, ApiError } from '@/lib/customRoutines';
 import type { Exercise, Routine } from '@/types/workout';
 
 type DraftExercise = { exercise: Exercise; plannedSets: number };
@@ -78,8 +78,20 @@ export default function CreateRoutinePage() {
     try {
       await saveCustomRoutine(routine);
       navigate('/workout');
-    } catch {
-      setError('Could not save this routine. Try again.');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('saveCustomRoutine failed:', err);
+      if (err instanceof ApiError) {
+        setError(
+          err.code === 'VALIDATION_ERROR'
+            ? err.message + (err.details ? ` (${JSON.stringify(err.details)})` : '')
+            : err.code === 'CONFLICT'
+              ? 'You already have a routine with a conflicting exercise reference.'
+              : err.message || 'Could not save this routine. Try again.',
+        );
+      } else {
+        setError('Could not save this routine — check your connection and try again.');
+      }
       setSaving(false);
     }
   }

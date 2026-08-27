@@ -19,7 +19,20 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: env.FRONTEND_ORIGINS,
+      // FRONTEND_ORIGINS is the sole source of truth in production — a
+      // request from any other origin is rejected there, full stop. In
+      // development only, any http://localhost:<port> is also allowed:
+      // Vite auto-increments its port whenever the previous one is still
+      // occupied (a stale dev server left running), so hardcoding one exact
+      // port in .env is fragile and breaks CORS every time that happens.
+      // This never applies outside development, and never allows a
+      // non-localhost origin regardless of environment.
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true); // same-origin / non-browser clients (curl, tests) send no Origin header
+        if (env.FRONTEND_ORIGINS.includes(origin)) return callback(null, true);
+        if (env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+        return callback(new Error(`Origin "${origin}" is not allowed by CORS`));
+      },
       credentials: false, // bearer token auth, not cookies — no credentialed CORS needed
     }),
   );
