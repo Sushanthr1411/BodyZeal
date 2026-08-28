@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarCheck, Flame, Moon, Send, Sparkles, Target, X } from 'lucide-react';
 import { loadRecentWorkouts, workoutsThisWeek, type RecentWorkout } from '@/lib/recentWorkouts';
 import { currentStreak, muscleGroupVolumeAll, volumeByDay } from '@/utils/analytics';
+import { api } from '@/lib/apiClient';
 
 type ChatMessage = { id: string; role: 'assistant' | 'user'; text: string };
 
@@ -58,19 +59,42 @@ export default function AssistantWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, typing]);
 
-  function respond(userText: string, presetId?: string) {
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'user', text: userText }]);
+  // Hybrid, as designed: the 4 preset buttons stay instant and rule-based
+  // (zero LLM cost) using locally-computed stats; only genuine free-typed
+  // questions go to the real assistant (POST /api/assistant/chat).
+  async function respondToPreset(preset: (typeof PRESETS)[number]) {
+    setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'user', text: preset.label }]);
     setTyping(true);
+    const history = await loadRecentWorkouts();
     window.setTimeout(() => {
-      const history = loadRecentWorkouts();
-      const reply = buildReply(presetId ?? 'unknown', history);
+      const reply = buildReply(preset.id, history);
       setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: reply }]);
       setTyping(false);
     }, 550);
   }
 
+  async function respondToFreeText(userText: string) {
+    const recentHistory = messages.slice(-6).map((m) => ({ role: m.role, text: m.text }));
+    setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'user', text: userText }]);
+    setTyping(true);
+    try {
+      const { reply } = await api.post<{ reply: string }>('/api/assistant/chat', {
+        message: userText,
+        history: recentHistory,
+      });
+      setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: reply }]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: 'assistant', text: "I couldn't reach the assistant just now — try again in a moment." },
+      ]);
+    } finally {
+      setTyping(false);
+    }
+  }
+
   function handlePreset(preset: (typeof PRESETS)[number]) {
-    respond(preset.label, preset.id);
+    respondToPreset(preset);
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -78,7 +102,7 @@ export default function AssistantWidget() {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
-    respond(text);
+    respondToFreeText(text);
   }
 
   return (

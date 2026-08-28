@@ -24,6 +24,7 @@ export default function OnboardingModal() {
   const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [transitioning, setTransitioning] = useState(false);
 
   function updateProfile(patch: Partial<UserProfile>) {
@@ -70,9 +71,14 @@ export default function OnboardingModal() {
   async function handleComplete() {
     if (!validateCurrentStep() || submitting) return;
     setSubmitting(true);
-    if (user) saveProfile(user.uid, profile);
-    await new Promise((resolve) => window.setTimeout(resolve, 400));
-    navigate('/dashboard', { replace: true });
+    setSubmitError('');
+    try {
+      if (user) await saveProfile(user.uid, profile);
+      navigate('/dashboard', { replace: true });
+    } catch {
+      setSubmitError('Could not save your profile. Try again.');
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -96,6 +102,10 @@ export default function OnboardingModal() {
               <FitnessProfileStep data={profile} errors={errors} onChange={updateProfile} />
             )}
           </div>
+
+          {submitError && (
+            <p role="alert" className="mt-4 text-sm font-medium text-red-600">{submitError}</p>
+          )}
 
           <div className="mt-8 flex items-center justify-between gap-3 border-t border-ink-200/70 pt-6">
             <button

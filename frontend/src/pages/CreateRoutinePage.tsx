@@ -8,7 +8,7 @@ import ExerciseFilters from '@/components/exercises/ExerciseFilters';
 import ExerciseList from '@/components/exercises/ExerciseList';
 import { EXERCISES } from '@/data/exercises';
 import { ALL_EQUIPMENT, ALL_MUSCLE_GROUPS, filterExercises, type EquipmentFilter, type MuscleGroupFilter } from '@/utils/exercises';
-import { saveCustomRoutine } from '@/lib/customRoutines';
+import { saveCustomRoutine, ApiError } from '@/lib/customRoutines';
 import type { Exercise, Routine } from '@/types/workout';
 
 type DraftExercise = { exercise: Exercise; plannedSets: number };
@@ -21,6 +21,7 @@ export default function CreateRoutinePage() {
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>(ALL_MUSCLE_GROUPS);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const visibleExercises = filterExercises(EXERCISES, equipment, muscleGroup);
   const draftIds = new Set(draft.map((item) => item.exercise.id));
@@ -55,7 +56,7 @@ export default function CreateRoutinePage() {
     });
   }
 
-  function handleSave() {
+  async function handleSave() {
     const trimmedName = name.trim();
     if (!trimmedName) {
       setError('Give your routine a name.');
@@ -65,14 +66,34 @@ export default function CreateRoutinePage() {
       setError('Add at least one exercise.');
       return;
     }
+    if (saving) return;
     const slug = trimmedName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const routine: Routine = {
       id: `${slug || 'routine'}-${Date.now().toString(36)}`,
       name: trimmedName,
       exercises: draft.map((item) => ({ exerciseId: item.exercise.id, plannedSets: item.plannedSets })),
     };
-    saveCustomRoutine(routine);
-    navigate('/workout');
+    setSaving(true);
+    setError('');
+    try {
+      await saveCustomRoutine(routine);
+      navigate('/workout');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('saveCustomRoutine failed:', err);
+      if (err instanceof ApiError) {
+        setError(
+          err.code === 'VALIDATION_ERROR'
+            ? err.message + (err.details ? ` (${JSON.stringify(err.details)})` : '')
+            : err.code === 'CONFLICT'
+              ? 'You already have a routine with a conflicting exercise reference.'
+              : err.message || 'Could not save this routine. Try again.',
+        );
+      } else {
+        setError('Could not save this routine — check your connection and try again.');
+      }
+      setSaving(false);
+    }
   }
 
   return (
@@ -229,9 +250,9 @@ export default function CreateRoutinePage() {
             <button type="button" onClick={() => navigate('/workout')} className="btn-outline flex-1">
               Cancel
             </button>
-            <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={handleSave} className="btn-accent flex-1">
+            <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={handleSave} disabled={saving} className="btn-accent flex-1">
               <Save className="h-4 w-4" />
-              Save Routine
+              {saving ? 'Saving...' : 'Save Routine'}
             </motion.button>
           </div>
         </div>

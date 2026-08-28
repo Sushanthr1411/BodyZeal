@@ -21,11 +21,25 @@ export default function ProfileSettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
+  const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<ProfileErrors>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (user) setProfile(loadProfile(user.uid));
+    if (!user) return;
+    let cancelled = false;
+    setLoading(true);
+    loadProfile(user.uid).then((loaded) => {
+      if (!cancelled) {
+        setProfile(loaded);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   function updateProfile(patch: Partial<UserProfile>) {
@@ -48,11 +62,30 @@ export default function ProfileSettingsPage() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!user || !validateProfile()) return;
-    saveProfile(user.uid, profile);
-    setSaved(true);
+    if (!user || saving || !validateProfile()) return;
+    setSaving(true);
+    setSaveError('');
+    try {
+      await saveProfile(user.uid, profile);
+      setSaved(true);
+    } catch {
+      setSaveError('Could not save your changes. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <PageHeader title="Settings" description="Manage your basic profile and fitness details." />
+        <main className="mx-auto max-w-4xl px-4 py-10 text-center text-sm text-ink-500 sm:px-6 lg:px-8">
+          Loading your profile...
+        </main>
+      </DashboardLayout>
+    );
   }
 
   return (
@@ -86,7 +119,10 @@ export default function ProfileSettingsPage() {
           </section>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
-            {saved && (
+            {saveError && (
+              <p role="alert" className="mr-auto text-sm font-medium text-red-600">{saveError}</p>
+            )}
+            {saved && !saveError && (
               <p className="mr-auto flex items-center gap-1.5 text-sm font-medium text-energy-800" role="status">
                 <Check className="h-4 w-4" />
                 Profile updated
@@ -95,9 +131,9 @@ export default function ProfileSettingsPage() {
             <button type="button" onClick={() => navigate('/dashboard')} className="btn-ghost">
               Cancel
             </button>
-            <button type="submit" className="btn-accent">
-              Save changes
-              <Check className="h-4 w-4" />
+            <button type="submit" className="btn-accent" disabled={saving}>
+              {saving ? 'Saving...' : 'Save changes'}
+              {!saving && <Check className="h-4 w-4" />}
             </button>
           </div>
         </form>

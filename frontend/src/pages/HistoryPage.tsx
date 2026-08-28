@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDays, Flame, History, ListChecks, Weight } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -6,11 +6,20 @@ import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import AnimatedNumber from '@/components/common/AnimatedNumber';
 import WorkoutRecordCard from '@/components/history/WorkoutRecordCard';
-import { loadRecentWorkouts } from '@/lib/recentWorkouts';
+import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
 import { currentStreak, groupWorkoutsByDate } from '@/utils/analytics';
 
 export default function HistoryPage() {
-  const [history] = useState(() => loadRecentWorkouts());
+  const [history, setHistory] = useState<RecentWorkout[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadRecentWorkouts().then((loaded) => {
+      if (!cancelled) setHistory(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const groups = groupWorkoutsByDate(history);
 
   const totalWorkouts = history.length;

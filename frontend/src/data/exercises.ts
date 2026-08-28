@@ -1,4 +1,5 @@
 import type { Equipment, Exercise, MuscleGroup } from '@/types/workout';
+import { api } from '@/lib/apiClient';
 
 export const EQUIPMENT_OPTIONS: Equipment[] = [
   'Dumbbell',
@@ -115,3 +116,28 @@ export const EXERCISES: Exercise[] = [
   { id: 'machine-calf-raise', name: 'Machine Calf Raise', equipment: 'Machine', muscleGroup: 'Calves' },
   { id: 'band-calf-raise', name: 'Resistance Band Calf Raise', equipment: 'Resistance Band', muscleGroup: 'Calves' },
 ];
+
+// Fetch-once cache: EXERCISES starts seeded with the array above (so every
+// existing `EXERCISES.find(...)` / `filterExercises(EXERCISES, ...)` call
+// site keeps working immediately, offline or online) and is opportunistically
+// refreshed from the backend's exercise catalog (GET /api/exercises, no auth
+// required) once, on module load. The array's contents are replaced in place
+// — the exported reference never changes — so components that re-render for
+// any other reason (route change, auth settling, etc.) pick up the synced
+// data without needing their own loading state.
+let syncedFromApi = false;
+export async function syncExercisesFromApi(): Promise<void> {
+  if (syncedFromApi) return;
+  try {
+    const fromApi = await api.get<Exercise[]>('/api/exercises');
+    if (fromApi.length > 0) {
+      EXERCISES.length = 0;
+      EXERCISES.push(...fromApi);
+      syncedFromApi = true;
+    }
+  } catch {
+    // Offline or backend unreachable — keep the bundled fallback list above.
+  }
+}
+
+void syncExercisesFromApi();

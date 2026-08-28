@@ -18,8 +18,8 @@ import AssistantWidget from '@/components/assistant/AssistantWidget';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { loadProfile } from '@/lib/profileStorage';
-import { loadRecentWorkouts } from '@/lib/recentWorkouts';
-import { currentStreak } from '@/utils/analytics';
+import type { UserProfile } from '@/types/profile';
+import { api } from '@/lib/apiClient';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
@@ -36,12 +36,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [profile, setProfile] = useState(() => user ? loadProfile(user.uid) : null);
-  const [streak] = useState(() => currentStreak(loadRecentWorkouts()));
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    setProfile(user ? loadProfile(user.uid) : null);
+    let cancelled = false;
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    loadProfile(user.uid).then((loaded) => {
+      if (!cancelled) setProfile(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ currentStreak: number }>('/api/analytics/streak')
+      .then((res) => {
+        if (!cancelled) setStreak(res.currentStreak);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const displayName = profile?.fullName || user?.displayName || user?.email?.split('@')[0] || 'Athlete';
   const email = user?.email || 'Signed in';

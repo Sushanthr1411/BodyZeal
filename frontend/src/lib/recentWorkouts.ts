@@ -1,10 +1,10 @@
-// Lightweight, frontend-only workout history (no backend). Powers the Log Workout
-// start screen (quick-pick names + a this-week stat) and the Dashboard analytics
-// section. Deliberately NOT a context — just browser storage read/written by
-// whichever page needs it.
-
-const STORAGE_KEY = 'bodyzeal-recent-workouts';
-const MAX_ENTRIES = 60;
+// Backed by the BodyZeal API (GET /api/workouts) instead of localStorage.
+// Same exported names/shapes as before (RecentWorkout, RecentWorkoutSet,
+// quickPickNames, workoutsThisWeek are unchanged pure functions) — only
+// loadRecentWorkouts became async, and saveRecentWorkout is gone: finishing
+// a session (POST /api/sessions/:id/finish) already returns the finished
+// record, so there's nothing left to save separately.
+import { api } from '@/lib/apiClient';
 
 export type RecentWorkoutSet = {
   exerciseName: string;
@@ -14,6 +14,7 @@ export type RecentWorkoutSet = {
 };
 
 export type RecentWorkout = {
+  id?: string;
   name: string;
   finishedAt: string;
   totalVolume: number;
@@ -22,24 +23,28 @@ export type RecentWorkout = {
   durationSeconds?: number;
 };
 
-export function loadRecentWorkouts(): RecentWorkout[] {
+export async function loadRecentWorkouts(): Promise<RecentWorkout[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return await api.get<RecentWorkout[]>('/api/workouts?limit=60');
   } catch {
     return [];
   }
 }
 
+// Deprecated, localStorage-backed fallback — kept only until the active-
+// session rewrite (integration Stage 6) replaces LogWorkoutPage's finish
+// flow with POST /api/sessions/:id/finish, whose response already *is* the
+// finished-workout record. Writes go nowhere useful once that lands; this
+// exists purely so the interim (session logging still localStorage-based)
+// doesn't silently lose finished-workout data before Stage 6 ships.
+const LEGACY_STORAGE_KEY = 'bodyzeal-recent-workouts';
 export function saveRecentWorkout(entry: RecentWorkout) {
   try {
-    const current = loadRecentWorkouts();
-    const next = [entry, ...current].slice(0, MAX_ENTRIES);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    const current: RecentWorkout[] = raw ? JSON.parse(raw) : [];
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify([entry, ...current].slice(0, 60)));
   } catch {
-    // best-effort only — never block the finish flow on storage errors
+    // best-effort only
   }
 }
 
