@@ -1,4 +1,4 @@
-import { Dumbbell, Timer, CalendarCheck, ArrowRight, Plus } from 'lucide-react';
+import { Dumbbell, Timer, CalendarCheck, ArrowRight, Trophy } from 'lucide-react';
 
 export default function ProductPreview() {
   return (
@@ -7,11 +7,11 @@ export default function ProductPreview() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="chip mb-4">Product preview</span>
           <h2 className="font-display text-3xl font-700 tracking-tight text-ink-900 sm:text-4xl">
-            A dashboard built for quick entry
+            A dashboard built for real progress
           </h2>
           <p className="mt-4 text-lg text-ink-600 text-pretty">
-            Here's a look at what your workout dashboard will become. This is a
-            static preview — the real thing is on the way.
+            Here's a look at what's waiting inside — your daily summary, active
+            streak, and a live feed of every set you log.
           </p>
         </div>
 
@@ -43,7 +43,7 @@ function DashboardPreview() {
           {/* sidebar */}
           <aside className="hidden border-r border-ink-200/70 bg-ink-50 p-4 lg:block">
             <div className="space-y-1">
-              {['Dashboard', 'History', 'Exercises'].map((label, i) => (
+              {['Dashboard', 'Roadmap', 'Personal Records', 'Exercise History'].map((label, i) => (
                 <div
                   key={label}
                   className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium ${
@@ -56,9 +56,9 @@ function DashboardPreview() {
               ))}
             </div>
             <div className="mt-6 rounded-xl bg-white p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-400">This week</p>
-              <p className="mt-1 font-display text-2xl font-700 text-ink-900">5</p>
-              <p className="text-[10px] text-ink-500">sessions logged</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-400">Current streak</p>
+              <p className="mt-1 font-display text-2xl font-700 text-ink-900">12 🔥</p>
+              <p className="text-[10px] text-ink-500">days in a row</p>
             </div>
           </aside>
 
@@ -92,31 +92,34 @@ function DashboardPreview() {
               </div>
             </div>
 
-            {/* entry form preview */}
+            {/* personal records preview */}
             <div className="mt-4 rounded-xl border border-ink-200/70 bg-white p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-ink-900">Log a set</p>
-                <span className="chip text-[10px]">Preview</span>
+                <div className="flex items-center gap-1.5">
+                  <Trophy className="h-4 w-4 text-energy-600" />
+                  <p className="text-sm font-semibold text-ink-900">Personal Records</p>
+                </div>
+                <span className="chip text-[10px]">Auto-tracked</span>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {['Exercise', 'Sets', 'Reps', 'Weight'].map((field) => (
-                  <div key={field} className="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2.5">
-                    <p className="text-[10px] font-medium uppercase tracking-wide text-ink-400">{field}</p>
-                    <div className="mt-1 h-3 w-3/4 rounded bg-ink-200" />
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {[
+                  { name: 'Bench Press', value: '80 kg', sub: '× 5 reps' },
+                  { name: 'Back Squat', value: '110 kg', sub: '× 3 reps' },
+                  { name: 'Deadlift', value: '130 kg', sub: '× 2 reps' },
+                ].map((pr) => (
+                  <div key={pr.name} className="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2.5">
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-ink-400">{pr.name}</p>
+                    <p className="mt-1 font-display text-base font-700 text-ink-900">
+                      {pr.value} <span className="text-[11px] font-medium text-ink-500">{pr.sub}</span>
+                    </p>
                   </div>
                 ))}
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-ink-500">Volume: <span className="font-semibold text-ink-800">Sets × Reps × Weight</span></span>
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-ink-900 px-3 py-1.5 text-xs font-semibold text-energy-400">
-                  <Plus className="h-3.5 w-3.5" /> Add set
-                </span>
               </div>
             </div>
 
             {/* history preview */}
             <div className="mt-4">
-              <p className="mb-2 text-sm font-semibold text-ink-900">Recent history</p>
+              <p className="mb-2 text-sm font-semibold text-ink-900">Exercise History</p>
               <div className="space-y-2">
                 {[
                   { date: 'Today', items: ['Bench Press — 4×8 @ 60kg', 'Squat — 3×10 @ 80kg'] },

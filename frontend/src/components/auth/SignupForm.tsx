@@ -55,8 +55,8 @@ export default function SignupForm() {
     setSubmitting(true);
     setAuthError('');
     try {
-      await signup(email.trim(), password);
-      navigate('/dashboard');
+      await signup(email.trim(), password, name.trim());
+      navigate('/onboarding');
     } catch (error) {
       setAuthError(getAuthErrorMessage(error, 'Unable to create your account. Try again.'));
     } finally {
@@ -159,6 +159,11 @@ export default function SignupForm() {
         Already have an account?{' '}
         <Link to="/login" className="font-semibold text-ink-900 hover:underline">
           Log in
+        </Link>
+      </p>
+      <p className="mt-2 text-center text-sm text-ink-500">
+        <Link to="/login" state={{ openReset: true }} className="hover:text-ink-800 hover:underline">
+          Forgot password?
         </Link>
       </p>
 

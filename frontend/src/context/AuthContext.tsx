@@ -3,9 +3,11 @@ import {
   browserSessionPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { useEffect, useState } from 'react';
@@ -34,9 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
-  async function signup(email: string, password: string) {
+  async function signup(email: string, password: string, displayName?: string) {
     if (!auth) throw new Error('Firebase authentication is not configured.');
-    await createUserWithEmailAndPassword(auth, email, password);
+    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    if (displayName?.trim()) {
+      await updateProfile(credential.user, { displayName: displayName.trim() });
+    }
   }
 
   async function logout() {
@@ -44,8 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
   }
 
+  // Firebase's own password-reset flow: the emailed link lands on a Firebase-hosted
+  // page (or a custom one, if an action URL is configured in the Firebase console)
+  // that calls confirmPasswordReset — the new password is written straight to
+  // Firebase Authentication, the only place this app's passwords are ever stored.
+  async function resetPassword(email: string) {
+    if (!auth) throw new Error('Firebase authentication is not configured.');
+    await sendPasswordResetEmail(auth, email);
+  }
+
   return (
-    <authContext.Provider value={{ user, loading, login, signup, logout }}>
+    <authContext.Provider value={{ user, loading, login, signup, logout, resetPassword }}>
       {children}
     </authContext.Provider>
   );

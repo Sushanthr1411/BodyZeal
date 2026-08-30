@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,10 +13,10 @@
     @apply bg-ink-50 text-ink-900 font-sans antialiased;
   }
   ::selection {
-    @apply bg-energy-400/30 text-ink-900;
+    @apply bg-energy-300/50 text-ink-900;
   }
   :focus-visible {
-    @apply outline-none ring-2 ring-energy-400 ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-energy-500 ring-offset-2 ring-offset-white;
   }
 }
 
@@ -30,6 +30,12 @@
   .btn-accent {
     @apply btn bg-energy-400 text-ink-950 px-5 py-3 hover:bg-energy-300 active:scale-[0.98] shadow-soft font-semibold;
   }
+  .btn-warning {
+    @apply btn bg-amber-400 text-ink-950 px-5 py-3 hover:bg-amber-300 active:scale-[0.98] shadow-soft font-semibold;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white px-5 py-3 hover:bg-red-500 active:scale-[0.98] shadow-soft font-semibold;
+  }
   .btn-ghost {
     @apply btn text-ink-700 px-5 py-3 hover:bg-ink-100 active:scale-[0.98];
   }
@@ -38,6 +44,9 @@
   }
   .card {
     @apply rounded-2xl border border-ink-200/70 bg-white shadow-soft;
+  }
+  .surface-dark {
+    @apply rounded-2xl border border-white/10 bg-ink-950 shadow-soft;
   }
   .input {
     @apply w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-ink-900 placeholder:text-ink-400 transition-colors duration-200 focus:border-ink-900 focus:ring-2 focus:ring-ink-900/10;
