@@ -1,33 +1,43 @@
-import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, Play, Pause, RotateCcw, Minus, Plus } from 'lucide-react';
+import { Timer, Minus, Plus, SkipForward, Pause, Play, RotateCcw } from 'lucide-react';
 import { formatTime } from '@/utils/workout';
-import { useRestTimer, DURATION_STEP, MIN_REST_SECONDS, MAX_REST_SECONDS } from '@/hooks/useRestTimer';
+import { DURATION_STEP, MIN_REST_SECONDS, MAX_REST_SECONDS } from '@/hooks/useRestTimer';
 
 const RADIUS = 72;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+// Fully controlled by LogWorkoutPage (which owns restEndAt as an absolute
+// timestamp, not a local decrementing count) so that RESTING survives a
+// remount — reloading the page, or navigating away and back — instead of
+// resetting: the remaining time is always recomputed from Date.now(), the
+// same way a real countdown keeps time while the page isn't mounted.
 type RestTimerProps = {
-  /** Bump this (e.g. total sets logged) to auto-restart the countdown after a set is added. */
-  restartSignal?: number;
+  isResting: boolean;
+  secondsRemaining: number;
+  durationSeconds: number;
+  onAdjustDuration: (delta: number) => void;
+  onSkipRest: () => void;
+  isRestPaused: boolean;
+  onTogglePause: () => void;
+  onResetRest: () => void;
 };
 
-export default function RestTimer({ restartSignal }: RestTimerProps) {
-  const { seconds, duration, running, start, pause, reset, restart, adjustDuration } = useRestTimer();
-  const progress = seconds / duration;
-  const low = seconds > 0 && seconds <= 10;
-  const done = seconds === 0;
+export default function RestTimer({
+  isResting,
+  secondsRemaining,
+  durationSeconds,
+  onAdjustDuration,
+  onSkipRest,
+  isRestPaused,
+  onTogglePause,
+  onResetRest,
+}: RestTimerProps) {
+  const displaySeconds = isResting ? secondsRemaining : durationSeconds;
+  const progress = isResting ? secondsRemaining / durationSeconds : 1;
+  const low = isResting && secondsRemaining > 0 && secondsRemaining <= 10;
+  const done = isResting && secondsRemaining === 0;
   const ringColor = low ? '#C96936' : '#83A31E';
-  const statusLabel = done ? 'Complete' : running ? 'Resting' : 'Ready';
-
-  const prevSignal = useRef(restartSignal);
-  useEffect(() => {
-    if (restartSignal !== undefined && prevSignal.current !== undefined && restartSignal !== prevSignal.current) {
-      restart();
-    }
-    prevSignal.current = restartSignal;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restartSignal]);
+  const statusLabel = done ? 'Complete' : isRestPaused ? 'Paused' : isResting ? 'Resting' : 'Ready';
 
   return (
     <div className="card relative overflow-hidden p-5">
@@ -48,7 +58,7 @@ export default function RestTimer({ restartSignal }: RestTimerProps) {
 
       <div className="relative mt-5 flex flex-col items-center">
         <div className="relative grid h-44 w-44 place-items-center">
-          {running && (
+          {isResting && !isRestPaused && (
             <motion.span
               className="absolute inset-0 rounded-full"
               style={{ background: ringColor }}
@@ -73,13 +83,13 @@ export default function RestTimer({ restartSignal }: RestTimerProps) {
             />
           </svg>
           <motion.p
-            key={seconds}
+            key={displaySeconds}
             initial={{ opacity: 0.4, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.25 }}
             className="absolute font-display text-4xl font-700 tabular-nums text-ink-900"
           >
-            {formatTime(seconds)}
+            {formatTime(displaySeconds)}
           </motion.p>
         </div>
 
@@ -88,18 +98,18 @@ export default function RestTimer({ restartSignal }: RestTimerProps) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => adjustDuration(-DURATION_STEP)}
-              disabled={running || duration <= MIN_REST_SECONDS}
+              onClick={() => onAdjustDuration(-DURATION_STEP)}
+              disabled={isResting || durationSeconds <= MIN_REST_SECONDS}
               aria-label="Decrease rest time"
               className="grid h-7 w-7 place-items-center rounded-md bg-white text-ink-600 shadow-sm transition-colors hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Minus className="h-3.5 w-3.5" />
             </button>
-            <span className="w-12 text-center text-sm font-semibold tabular-nums text-ink-900">{formatTime(duration)}</span>
+            <span className="w-12 text-center text-sm font-semibold tabular-nums text-ink-900">{formatTime(durationSeconds)}</span>
             <button
               type="button"
-              onClick={() => adjustDuration(DURATION_STEP)}
-              disabled={running || duration >= MAX_REST_SECONDS}
+              onClick={() => onAdjustDuration(DURATION_STEP)}
+              disabled={isResting || durationSeconds >= MAX_REST_SECONDS}
               aria-label="Increase rest time"
               className="grid h-7 w-7 place-items-center rounded-md bg-white text-ink-600 shadow-sm transition-colors hover:bg-ink-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -108,35 +118,37 @@ export default function RestTimer({ restartSignal }: RestTimerProps) {
           </div>
         </div>
 
-        <div className="mt-4 grid w-full grid-cols-3 gap-2">
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          type="button"
+          onClick={onSkipRest}
+          disabled={!isResting}
+          className="btn-accent mt-4 w-full text-sm disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <SkipForward className="h-3.5 w-3.5" />
+          Skip Rest
+        </motion.button>
+
+        <div className="mt-2 grid w-full grid-cols-2 gap-2">
           <motion.button
             whileTap={{ scale: 0.96 }}
             type="button"
-            onClick={start}
-            disabled={running || seconds === 0}
-            className="btn-accent col-span-1 px-2 text-sm"
+            onClick={onTogglePause}
+            disabled={!isResting}
+            className="btn w-full justify-center bg-ink-100 py-2.5 text-xs text-ink-700 hover:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Play className="h-3.5 w-3.5" />
-            Start
+            {isRestPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+            {isRestPaused ? 'Resume' : 'Pause'}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.96 }}
             type="button"
-            onClick={pause}
-            disabled={!running}
-            className="btn col-span-1 bg-ink-100 px-2 text-sm text-ink-700 hover:bg-ink-200"
-          >
-            <Pause className="h-3.5 w-3.5" />
-            Pause
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            type="button"
-            onClick={reset}
-            className="btn col-span-1 bg-ink-100 px-2 text-sm text-ink-700 hover:bg-ink-200"
+            onClick={onResetRest}
+            disabled={!isResting}
+            className="btn w-full justify-center bg-ink-100 py-2.5 text-xs text-ink-700 hover:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
+            Reset Timer
           </motion.button>
         </div>
       </div>

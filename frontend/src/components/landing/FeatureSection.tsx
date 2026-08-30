@@ -1,13 +1,15 @@
-import { Dumbbell, History, Calculator, ListChecks, Timer, CalendarCheck } from 'lucide-react';
+import { Timer, ListOrdered, Compass, Sparkles, BarChart3, Trophy, CalendarCheck, FileDown } from 'lucide-react';
 import { FEATURE_LIST } from '@/data/appData';
 
 const ICONS = {
-  Dumbbell,
-  History,
-  Calculator,
-  ListChecks,
   Timer,
+  ListOrdered,
+  Compass,
+  Sparkles,
+  BarChart3,
+  Trophy,
   CalendarCheck,
+  FileDown,
 } as const;
 
 export default function FeatureSection() {
@@ -17,15 +19,15 @@ export default function FeatureSection() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="chip mb-4">Core capabilities</span>
           <h2 className="font-display text-3xl font-700 tracking-tight text-ink-900 text-balance sm:text-4xl">
-            Everything you need to log a workout
+            Everything you need to train with purpose
           </h2>
           <p className="mt-4 text-lg text-ink-600 text-pretty">
-            No clutter. No noise. Just the tools that help you record, track, and
-            review your training.
+            From your first rep to your next personal record — guided sessions,
+            a personalized plan, and real analytics, all in one place.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURE_LIST.map((feature, i) => {
             const Icon = ICONS[feature.icon as keyof typeof ICONS];
             return (

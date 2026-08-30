@@ -5,11 +5,16 @@ import { toFrontendSet, type FrontendWorkoutSet, type FinishedSessionResponse } 
 import type { QuickLogInput } from '../schemas/workout.schema';
 
 type SessionWithSets = SessionRow & { sets: (SetRow & { exercise: ExerciseRow })[] };
+type QuickLogSetWithExercise = SetRow & { exercise: ExerciseRow };
 
 // Matches frontend/src/lib/recentWorkouts.ts's RecentWorkout exactly, plus
-// `id` — the same shape session.service.ts's finishSession() already
-// returns, reused here rather than re-derived.
-function toFinishedWorkoutResponse(row: SessionWithSets): FinishedSessionResponse {
+// `id`/`kind` — `kind` distinguishes a real finished routine session from a
+// one-off quick-logged set once the two are merged into one history list, so
+// the frontend can label it and the unified delete endpoint knows which
+// table it's looking at without a second round-trip.
+export type HistoryEntryResponse = FinishedSessionResponse & { kind: 'session' | 'quickLog' };
+
+function toFinishedWorkoutResponse(row: SessionWithSets): HistoryEntryResponse {
   return {
     id: row.id,
     name: row.name,
@@ -18,17 +23,50 @@ function toFinishedWorkoutResponse(row: SessionWithSets): FinishedSessionRespons
     totalSets: row.totalSets,
     durationSeconds: row.durationSeconds ?? 0,
     sets: row.sets.map((s) => ({ exerciseName: s.exercise.name, reps: s.reps, weight: s.weight, volume: s.volume })),
+    kind: 'session',
   };
 }
 
-export async function listFinishedWorkouts(userId: string, limit: number): Promise<FinishedSessionResponse[]> {
-  const rows = await prisma.workoutSession.findMany({
-    where: { userId, status: SessionStatus.FINISHED },
-    orderBy: { finishedAt: 'desc' },
-    take: limit,
-    include: { sets: { include: { exercise: true }, orderBy: { loggedAt: 'asc' } } },
-  });
-  return rows.map(toFinishedWorkoutResponse);
+// A quick-logged set has no workout "name" of its own — the exercise name
+// stands in for it, and it's always exactly one set entry.
+function toQuickLogHistoryResponse(row: QuickLogSetWithExercise): HistoryEntryResponse {
+  return {
+    id: row.id,
+    name: row.exercise.name,
+    finishedAt: row.loggedAt.toISOString(),
+    totalVolume: row.volume,
+    totalSets: row.sets,
+    durationSeconds: 0,
+    sets: [{ exerciseName: row.exercise.name, reps: row.reps, weight: row.weight, volume: row.volume }],
+    kind: 'quickLog',
+  };
+}
+
+/**
+ * The user's finished-activity history: real finished routine sessions AND
+ * one-off quick-logged sets, merged into one chronological list. A quick log
+ * is just as much "an exercise the user did" as a full session, so it
+ * belongs in history/streak/stats the same way — see getCurrentStreak.
+ */
+export async function listFinishedWorkouts(userId: string, limit: number): Promise<HistoryEntryResponse[]> {
+  const [sessions, quickLogSets] = await Promise.all([
+    prisma.workoutSession.findMany({
+      where: { userId, status: SessionStatus.FINISHED },
+      orderBy: { finishedAt: 'desc' },
+      take: limit,
+      include: { sets: { include: { exercise: true }, orderBy: { loggedAt: 'asc' } } },
+    }),
+    prisma.workoutSet.findMany({
+      where: { userId, sessionId: null },
+      orderBy: { loggedAt: 'desc' },
+      take: limit,
+      include: { exercise: true },
+    }),
+  ]);
+
+  const entries = [...sessions.map(toFinishedWorkoutResponse), ...quickLogSets.map(toQuickLogHistoryResponse)];
+  entries.sort((a, b) => (a.finishedAt < b.finishedAt ? 1 : -1));
+  return entries.slice(0, limit);
 }
 
 export async function getFinishedWorkoutById(userId: string, id: string): Promise<FinishedSessionResponse> {
@@ -43,6 +81,37 @@ export async function getFinishedWorkoutById(userId: string, id: string): Promis
     throw AppError.notFound('Workout not found');
   }
   return toFinishedWorkoutResponse(row);
+}
+
+/**
+ * Permanently deletes one history entry — a finished routine session (+ its
+ * sets, via the schema's ON DELETE CASCADE) or a one-off quick-logged set —
+ * so a wrongly-logged entry can be removed entirely from Exercise History
+ * (the only place deletion is exposed; Today's Activity on the dashboard is
+ * read-only). Unlike discardSession (session.service.ts), which only flips
+ * an ACTIVE session to DISCARDED for in-progress cancellation, this is a
+ * real delete of a past record. `id` alone doesn't say which table it's in
+ * (the merged history list mixes both), so this tries a session first, then
+ * falls back to a quick-log set — the two id spaces never collide (separate
+ * UUID-keyed tables). Every analytics/history/streak query already excludes
+ * non-FINISHED sessions and (for streak) already counts quick logs, so once
+ * the row is gone it disappears from every sum, chart, and streak too.
+ */
+export async function deleteWorkoutEntry(userId: string, id: string): Promise<void> {
+  const session = await prisma.workoutSession.findUnique({ where: { id } });
+  if (session) {
+    if (session.userId !== userId || session.status !== SessionStatus.FINISHED) {
+      throw AppError.notFound('Workout not found');
+    }
+    await prisma.workoutSession.delete({ where: { id } });
+    return;
+  }
+
+  const quickLogSet = await prisma.workoutSet.findUnique({ where: { id } });
+  if (!quickLogSet || quickLogSet.userId !== userId || quickLogSet.sessionId !== null) {
+    throw AppError.notFound('Workout not found');
+  }
+  await prisma.workoutSet.delete({ where: { id } });
 }
 
 // Mirrors todayLog.ts's own `todayKey()` — a UTC calendar-day boundary — so

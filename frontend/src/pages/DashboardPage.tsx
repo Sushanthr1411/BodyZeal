@@ -11,8 +11,8 @@ import AnalyticsSection from '@/components/dashboard/analytics/AnalyticsSection'
 import type { WorkoutSet } from '@/types/workout';
 import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
 import { loadActiveSession, type ActiveSessionSnapshot } from '@/lib/activeSession';
-import { loadTodayLog, addTodayLogEntry, removeTodayLogEntry } from '@/lib/todayLog';
-import { isToday, todaysWorkouts } from '@/utils/analytics';
+import { loadTodayLog, addTodayLogEntry } from '@/lib/todayLog';
+import { isToday, todaysPersonalRecordExercises, todaysWorkouts } from '@/utils/analytics';
 import { groupSetsByExercise } from '@/utils/workout';
 import { useAuth } from '@/context/useAuth';
 import { loadProfile } from '@/lib/profileStorage';
@@ -47,7 +47,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    loadRecentWorkouts().then((loaded) => {
+    // The default limit (60) was fine for the old 7-day/20-week charts, but the
+    // Progress section now also plots a 6-month trend and several all-time
+    // breakdowns — the backend's max (200) keeps those from silently truncating
+    // an active user's older history.
+    loadRecentWorkouts(200).then((loaded) => {
       if (!cancelled) setHistory(loaded);
     });
     return () => {
@@ -56,6 +60,7 @@ export default function DashboardPage() {
   }, []);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const firstName = (profile?.fullName || user?.displayName || '').split(' ')[0] || undefined;
+  const reportUserName = profile?.fullName || user?.displayName || user?.email?.split('@')[0] || 'Athlete';
 
   useEffect(() => {
     if (!user) return;
@@ -70,18 +75,23 @@ export default function DashboardPage() {
 
   // "Today" should reflect ALL of today's training, not just the quick-log widget: finished
   // routine workouts from today, the in-progress routine session (if started today), and quick-log sets.
+  // `history` now also carries today's quick logs (merged into /api/workouts for Exercise History) —
+  // excluded here since `entries` below (the dedicated, optimistically-updated /api/workouts/today
+  // fetch) is already the source of truth for them; without this filter they'd be double-counted.
   const routineSetsToday = useMemo(() => {
-    const fromFinished: WorkoutSet[] = todaysWorkouts(history).flatMap((workout, wi) =>
-      (workout.sets ?? []).map((set, si) => ({
-        id: `history-${wi}-${si}`,
-        exerciseName: set.exerciseName,
-        sets: 1,
-        reps: set.reps,
-        weight: set.weight,
-        volume: set.volume,
-        loggedAt: workout.finishedAt,
-      })),
-    );
+    const fromFinished: WorkoutSet[] = todaysWorkouts(history)
+      .filter((workout) => workout.kind !== 'quickLog')
+      .flatMap((workout, wi) =>
+        (workout.sets ?? []).map((set, si) => ({
+          id: `history-${wi}-${si}`,
+          exerciseName: set.exerciseName,
+          sets: 1,
+          reps: set.reps,
+          weight: set.weight,
+          volume: set.volume,
+          loggedAt: workout.finishedAt,
+        })),
+      );
     const fromActive = activeSession && isToday(new Date(activeSession.startedAt).toISOString())
       ? activeSession.entries
       : [];
@@ -94,7 +104,7 @@ export default function DashboardPage() {
   );
   const totalVolume = allTodaysSets.reduce((total, entry) => total + entry.volume, 0);
   const exerciseCount = useMemo(() => groupSetsByExercise(allTodaysSets).length, [allTodaysSets]);
-  const removableIds = useMemo(() => new Set(entries.map((entry) => entry.id)), [entries]);
+  const newPRExercises = useMemo(() => todaysPersonalRecordExercises(history, allTodaysSets), [history, allTodaysSets]);
 
   function addEntry(entry: WorkoutSet & { exerciseId: string }) {
     setQuickLogError('');
@@ -109,19 +119,15 @@ export default function DashboardPage() {
       });
   }
 
-  function removeEntry(id: string) {
-    setQuickLogError('');
-    const removed = entries.find((entry) => entry.id === id);
-    setEntries((current) => current.filter((entry) => entry.id !== id)); // optimistic
-    removeTodayLogEntry(id).catch(() => {
-      if (removed) setEntries((current) => [...current, removed]); // rollback
-      setQuickLogError("Couldn't remove that entry — try again.");
-    });
-  }
-
   return (
     <DashboardLayout>
-      <DashboardHeader firstName={firstName} hasLoggedToday={allTodaysSets.length > 0} />
+      <DashboardHeader
+        firstName={firstName}
+        hasLoggedToday={allTodaysSets.length > 0}
+        history={history}
+        reportUserName={reportUserName}
+        reportUserEmail={user?.email ?? undefined}
+      />
       <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
         <div className="mx-auto max-w-7xl">
           {/* Today's Training: only shown while a /workout routine session is actually in progress */}
@@ -133,7 +139,7 @@ export default function DashboardPage() {
 
           {/* Today, at a glance */}
           <motion.div {...sectionMotion(1)} className="mt-5">
-            <TodaySnapshot exerciseCount={exerciseCount} totalVolume={totalVolume} />
+            <TodaySnapshot exerciseCount={exerciseCount} totalVolume={totalVolume} newPRExercises={newPRExercises} />
           </motion.div>
 
           {/* Primary workspace: log a set + rest, side by side so both are reachable at once */}
@@ -159,7 +165,7 @@ export default function DashboardPage() {
 
           {/* Today's activity */}
           <motion.div {...sectionMotion(4)} className="mt-6">
-            <WorkoutHistoryCard entries={allTodaysSets} onRemove={removeEntry} removableIds={removableIds} />
+            <WorkoutHistoryCard entries={allTodaysSets} />
           </motion.div>
         </div>
       </div>

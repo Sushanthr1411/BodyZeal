@@ -28,5 +28,16 @@ export const logSetSchema = z
   .strict();
 export type LogSetInput = z.infer<typeof logSetSchema>;
 
+// The frontend tracks "active workout time" client-side (paused during rest/manual
+// pause, reset by Restart Exercise) — a concept the server has no visibility into.
+// Optional: the server clamps it to never exceed the actual wall-clock session
+// duration, so a missing/absent value just falls back to the old wall-clock figure.
+export const finishSessionSchema = z
+  .object({
+    durationSeconds: z.number().int().min(0).max(86400).optional(),
+  })
+  .strict();
+export type FinishSessionInput = z.infer<typeof finishSessionSchema>;
+
 export const sessionIdParamSchema = z.object({ id: z.string().min(1) });
 export const sessionSetIdParamSchema = z.object({ id: z.string().min(1), setId: z.string().min(1) });

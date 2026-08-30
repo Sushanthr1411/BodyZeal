@@ -5,6 +5,7 @@ import {
   createSessionSchema,
   patchSessionSchema,
   logSetSchema,
+  finishSessionSchema,
   sessionIdParamSchema,
   sessionSetIdParamSchema,
 } from '../schemas/session.schema';
@@ -15,6 +16,7 @@ import {
   logSetController,
   deleteSetController,
   finishSessionController,
+  discardSessionController,
 } from '../controllers/session.controller';
 
 export const sessionRouter = Router();
@@ -42,6 +44,12 @@ sessionRouter.delete(
 sessionRouter.post(
   '/api/sessions/:id/finish',
   authenticate,
-  validate({ params: sessionIdParamSchema }),
+  validate({ params: sessionIdParamSchema, body: finishSessionSchema }),
   finishSessionController,
+);
+sessionRouter.post(
+  '/api/sessions/:id/discard',
+  authenticate,
+  validate({ params: sessionIdParamSchema }),
+  discardSessionController,
 );

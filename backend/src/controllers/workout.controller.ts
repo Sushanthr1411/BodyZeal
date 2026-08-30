@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import {
   listFinishedWorkouts,
   getFinishedWorkoutById,
+  deleteWorkoutEntry,
   getTodayQuickLog,
   createQuickLog,
   deleteQuickLog,
@@ -21,6 +22,13 @@ export async function getWorkoutByIdController(req: Request, res: Response) {
   const id = req.params.id as string;
   const workout = await getFinishedWorkoutById(req.user.uid, id);
   res.status(200).json(workout);
+}
+
+export async function deleteWorkoutController(req: Request, res: Response) {
+  if (!req.user) throw AppError.unauthorized();
+  const id = req.params.id as string;
+  await deleteWorkoutEntry(req.user.uid, id);
+  res.status(204).send();
 }
 
 export async function getTodayQuickLogController(req: Request, res: Response) {

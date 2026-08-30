@@ -238,7 +238,27 @@ export async function deleteSet(userId: string, sessionId: string, setId: string
   await prisma.workoutSet.delete({ where: { id: setId } });
 }
 
-export async function finishSession(userId: string, sessionId: string): Promise<FinishedSessionResponse> {
+/**
+ * Cancels an in-progress session entirely: the session and every set logged
+ * under it stay in the database (for audit/debugging) but flip to DISCARDED,
+ * which every history/analytics query already excludes (they all filter on
+ * `session: { status: FINISHED }` — see analytics.service.ts) and which
+ * getActiveSession's `status: ACTIVE` filter also excludes, so a discarded
+ * session can never be resumed and never appears as "Continue Workout".
+ */
+export async function discardSession(userId: string, sessionId: string): Promise<void> {
+  const session = await assertOwnedActiveSession(userId, sessionId);
+  await prisma.workoutSession.update({
+    where: { id: session.id },
+    data: { status: SessionStatus.DISCARDED, finishedAt: new Date() },
+  });
+}
+
+export async function finishSession(
+  userId: string,
+  sessionId: string,
+  clientDurationSeconds?: number,
+): Promise<FinishedSessionResponse> {
   const session = await assertOwnedActiveSession(userId, sessionId);
   const finishedAt = new Date();
 
@@ -253,7 +273,12 @@ export async function finishSession(userId: string, sessionId: string): Promise<
     });
     const totalVolume = sets.reduce((sum, s) => sum + s.volume, 0);
     const totalSets = sets.length;
-    const durationSeconds = Math.max(0, Math.floor((finishedAt.getTime() - session.startedAt.getTime()) / 1000));
+    const wallClockDurationSeconds = Math.max(0, Math.floor((finishedAt.getTime() - session.startedAt.getTime()) / 1000));
+    // The client tracks actual active workout time (paused during rest/manual pause,
+    // reset by Restart Exercise) — prefer it over raw wall-clock time when given, but
+    // never let it exceed the session's real elapsed time.
+    const durationSeconds =
+      clientDurationSeconds !== undefined ? Math.min(clientDurationSeconds, wallClockDurationSeconds) : wallClockDurationSeconds;
 
     const updated = await tx.workoutSession.update({
       where: { id: sessionId },

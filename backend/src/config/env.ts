@@ -9,6 +9,12 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID is required'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+  // Optional (not required to boot) — the "Need Help?" contact form 500s with a
+  // clear error at send-time if these are unset, rather than blocking startup
+  // for every deployment that hasn't configured outbound email yet.
+  SUPPORT_EMAIL_USER: z.string().optional(),
+  SUPPORT_EMAIL_APP_PASSWORD: z.string().optional(),
+  SUPPORT_EMAIL_TO: z.string().optional(),
   FRONTEND_ORIGINS: z
     .string()
     .min(1, 'FRONTEND_ORIGINS is required')
@@ -27,6 +33,9 @@ export type Env = {
   FIREBASE_PROJECT_ID: string;
   GOOGLE_APPLICATION_CREDENTIALS?: string;
   GEMINI_API_KEY: string;
+  SUPPORT_EMAIL_USER?: string;
+  SUPPORT_EMAIL_APP_PASSWORD?: string;
+  SUPPORT_EMAIL_TO?: string;
   FRONTEND_ORIGINS: string[];
 };
 

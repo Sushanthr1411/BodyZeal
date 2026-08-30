@@ -18,7 +18,16 @@ type Schemas = Partial<{
 export function validate(schemas: Schemas) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (schemas.body) {
-      const result = schemas.body.safeParse(req.body);
+      // A request sent with no `Content-Type: application/json` (or no body at
+      // all) leaves `req.body` as `undefined`, which fails every object schema
+      // outright — even one where every field is optional (e.g. finishSessionSchema)
+      // — with a generic "expected object, received undefined" instead of the
+      // schema's own per-field rules. Defaulting to `{}` here makes "no body sent"
+      // behave exactly like "an empty JSON object was sent": schemas with only
+      // optional fields validate fine (preserving pre-existing bodyless-call
+      // support), while schemas with required fields still correctly 400 with a
+      // clear "field is required" message. No validation is weakened either way.
+      const result = schemas.body.safeParse(req.body ?? {});
       if (!result.success) return next(toValidationError(result.error, 'body'));
       req.body = result.data;
     }

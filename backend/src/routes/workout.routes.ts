@@ -10,6 +10,7 @@ import {
 import {
   listWorkoutsController,
   getWorkoutByIdController,
+  deleteWorkoutController,
   getTodayQuickLogController,
   createQuickLogController,
   deleteQuickLogController,
@@ -31,3 +32,4 @@ workoutRouter.delete(
 
 workoutRouter.get('/api/workouts', authenticate, validate({ query: listWorkoutsQuerySchema }), listWorkoutsController);
 workoutRouter.get('/api/workouts/:id', authenticate, validate({ params: workoutIdParamSchema }), getWorkoutByIdController);
+workoutRouter.delete('/api/workouts/:id', authenticate, validate({ params: workoutIdParamSchema }), deleteWorkoutController);

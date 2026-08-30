@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Mail } from 'lucide-react';
+
+const SUPPORT_EMAIL = 'teamcollabcore@gmail.com';
 
 export default function Footer() {
   return (
@@ -18,6 +20,21 @@ export default function Footer() {
             Track every set. Build every day.
           </p>
         </div>
+
+        <div className="mt-8 flex flex-col items-start gap-2 rounded-2xl border border-ink-200/70 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-ink-900">Reach us out</p>
+            <p className="text-xs text-ink-500">Questions, feedback, or an issue — we'd love to hear from you.</p>
+          </div>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-ink-900 px-3.5 py-2 text-sm font-medium text-energy-400 transition-colors hover:bg-ink-800"
+          >
+            <Mail className="h-4 w-4" />
+            {SUPPORT_EMAIL}
+          </a>
+        </div>
+
         <div className="mt-8 border-t border-ink-200/60 pt-6">
           <p className="text-xs text-ink-400">
             &copy; {new Date().getFullYear()} Fitness &amp; Workout Log. A focused workout logging app.

@@ -4,7 +4,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import WorkoutStart from '@/components/workout/WorkoutStart';
 import ActiveWorkout from '@/components/workout/ActiveWorkout';
 import WorkoutSummary from '@/components/workout/WorkoutSummary';
-import type { Exercise, Routine, WorkoutSet } from '@/types/workout';
+import type { Exercise, Routine, WorkoutPhase, WorkoutSet } from '@/types/workout';
 import { formatTime, groupSetsByExercise } from '@/utils/workout';
 import { ALL_EQUIPMENT, ALL_MUSCLE_GROUPS, type EquipmentFilter, type MuscleGroupFilter } from '@/utils/exercises';
 import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
@@ -15,9 +15,12 @@ import {
   logSessionSet,
   removeSessionSet,
   finishSession,
+  discardSession,
   type ActiveSessionSnapshot,
 } from '@/lib/activeSession';
 import { loadCustomRoutines, deleteCustomRoutine, ApiError } from '@/lib/customRoutines';
+import { loadWorkoutTimerState, saveWorkoutTimerState, clearWorkoutTimerState } from '@/lib/workoutTimerState';
+import { DEFAULT_REST_SECONDS, MIN_REST_SECONDS, MAX_REST_SECONDS } from '@/hooks/useRestTimer';
 import { ROUTINES } from '@/data/routines';
 import { EXERCISES } from '@/data/exercises';
 import { findNextIncompleteExercise, isExerciseComplete, routineProgress, type PlannedSetsMap } from '@/utils/routine';
@@ -37,7 +40,6 @@ export default function LogWorkoutPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [routineId, setRoutineId] = useState<string | null>(null);
   const [workoutName, setWorkoutName] = useState('');
-  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [finishedSummary, setFinishedSummary] = useState<RecentWorkout | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [plannedSets, setPlannedSets] = useState<PlannedSetsMap>({});
@@ -47,13 +49,27 @@ export default function LogWorkoutPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>(ALL_MUSCLE_GROUPS);
-  const [now, setNow] = useState(() => Date.now());
+
+  // Workout execution state — separate from `status` (which page/section renders).
+  // The main workout timer only ticks while phase === 'ACTIVE'; it is not implied by
+  // status === 'active' alone, so navigating into the page never starts it on its own.
+  const [phase, setPhase] = useState<WorkoutPhase>('NOT_STARTED');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Rest is a countdown to a fixed point in time (an absolute end timestamp), not a
+  // locally decrementing count — that's what lets it keep accurate real-world time
+  // across a remount (reload, or navigating away and back), unlike the main timer.
+  const [restEndAt, setRestEndAt] = useState<number | null>(null);
+  const [restDurationSeconds, setRestDurationSeconds] = useState(DEFAULT_REST_SECONDS);
+  const [restSecondsRemaining, setRestSecondsRemaining] = useState(0);
+  const [isLoggingSet, setIsLoggingSet] = useState(false);
+  const [isStartingSession, setIsStartingSession] = useState(false);
+  const [isRestartingExercise, setIsRestartingExercise] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
 
   function applySnapshot(snapshot: ActiveSessionSnapshot) {
     setSessionId(snapshot.id);
     setRoutineId(snapshot.routineId);
     setWorkoutName(snapshot.workoutName);
-    setStartedAt(snapshot.startedAt);
     setExercises(snapshot.exercises);
     setPlannedSets(snapshot.plannedSets);
     setActiveExerciseId(snapshot.activeExerciseId);
@@ -75,6 +91,61 @@ export default function LogWorkoutPage() {
       if (cancelled) return;
       if (resumed) {
         applySnapshot(resumed);
+        // Prefer the locally remembered phase/elapsed value — it's exact and
+        // survives a reload or navigating away and back (see workoutTimerState.ts).
+        // It's only missing on a genuinely new device/tab, in which case fall back
+        // to an approximation: `activeExerciseId` is set as soon as an exercise is
+        // merely selected (long before "Start Exercise" is clicked), so it is NOT
+        // a valid signal here — only actual logged sets prove the workout began.
+        const stored = loadWorkoutTimerState(resumed.id);
+        if (stored) {
+          setElapsedSeconds(stored.elapsedSeconds);
+          setRestDurationSeconds(stored.restDurationSeconds);
+          if (stored.phase === 'RESTING' && stored.restEndAt != null) {
+            // Rest is a real countdown to a fixed point in time, so it's allowed to
+            // keep running across a remount — recompute what's actually left.
+            const remaining = Math.max(0, Math.ceil((stored.restEndAt - Date.now()) / 1000));
+            if (remaining > 0) {
+              setRestEndAt(stored.restEndAt);
+              setRestSecondsRemaining(remaining);
+              setPhase('RESTING');
+            } else {
+              // Rest finished while the page was away — resume active automatically,
+              // exactly like it would have if the page had stayed open the whole time.
+              setRestEndAt(null);
+              setPhase('ACTIVE');
+            }
+          } else if (stored.phase === 'RESTING') {
+            // Rest was manually paused (frozen, no end timestamp) — that's already a
+            // steady, non-ticking state, so it restores exactly as left, unpaused only
+            // by an explicit click either way.
+            setRestEndAt(null);
+            setRestSecondsRemaining(stored.restSecondsRemaining);
+            setPhase('RESTING');
+          } else if (stored.phase === 'ACTIVE') {
+            // Unlike rest, "actively lifting" has no fixed end point to recompute from,
+            // so a remount never leaves it silently ticking — the user must explicitly
+            // resume, exactly the same rule as the very first entry into the page.
+            setRestEndAt(null);
+            setPhase('MANUALLY_PAUSED');
+          } else {
+            // NOT_STARTED, MANUALLY_PAUSED, COMPLETED are steady states — pass through.
+            setRestEndAt(null);
+            setPhase(stored.phase);
+          }
+        } else if (resumed.entries.length > 0) {
+          // No local record (new device/tab) but sets exist, so the workout was
+          // genuinely underway — approximate elapsed time from wall-clock startedAt,
+          // and land paused (no way to know rest state without the local record).
+          setElapsedSeconds(Math.max(0, Math.floor((Date.now() - resumed.startedAt) / 1000)));
+          setPhase('MANUALLY_PAUSED');
+        } else {
+          // Nothing logged yet — activeExerciseId may already be set (it's assigned
+          // as soon as an exercise is merely selected, before "Start Exercise" is
+          // ever clicked), so it is NOT proof the workout began. Only logged sets are.
+          setElapsedSeconds(0);
+          setPhase('NOT_STARTED');
+        }
         setStatus('active');
         return;
       }
@@ -87,11 +158,39 @@ export default function LogWorkoutPage() {
           const updated = await patchActiveExercise(started.id, quickLogExercise.id);
           if (!cancelled) {
             applySnapshot(updated);
+            setElapsedSeconds(0);
+            setRestEndAt(null);
+            setPhase('NOT_STARTED');
             setStatus('active');
           }
         } catch {
           if (!cancelled) {
             setSessionError("Couldn't start a session for that exercise — try again from the workout screen.");
+            setStatus('setup');
+          }
+        }
+        return;
+      }
+
+      // Landed here from the Roadmap page's "Start this day" button — the routine
+      // was already saved (or reused) there; this just starts a session for it.
+      const startRoutine = (location.state as { startRoutineId?: string; startRoutineName?: string } | null);
+      if (startRoutine?.startRoutineId && startRoutine.startRoutineName) {
+        navigate(location.pathname, { replace: true, state: null });
+        try {
+          const started = await startSession({ routineId: startRoutine.startRoutineId, name: startRoutine.startRoutineName });
+          const firstId = started.exercises[0]?.id ?? null;
+          const finalSnapshot = firstId ? await patchActiveExercise(started.id, firstId) : started;
+          if (!cancelled) {
+            applySnapshot(finalSnapshot);
+            setElapsedSeconds(0);
+            setRestEndAt(null);
+            setPhase('NOT_STARTED');
+            setStatus('active');
+          }
+        } catch {
+          if (!cancelled) {
+            setSessionError("Couldn't start that roadmap day — try again from the workout screen.");
             setStatus('setup');
           }
         }
@@ -112,11 +211,41 @@ export default function LogWorkoutPage() {
     loadCustomRoutines().then(setCustomRoutines);
   }, []);
 
+  // The main workout timer: ticks once per second only while actively running, and
+  // pauses (cleanup clears the interval) the instant phase leaves 'ACTIVE' — during
+  // RESTING, MANUALLY_PAUSED, COMPLETED, or before the workout has been started at all.
   useEffect(() => {
-    if (status !== 'active') return;
-    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    if (phase !== 'ACTIVE') return;
+    const interval = window.setInterval(() => setElapsedSeconds((current) => current + 1), 1000);
     return () => window.clearInterval(interval);
-  }, [status]);
+  }, [phase]);
+
+  // The rest countdown: recomputed from the absolute restEndAt on every tick (and
+  // immediately on mount/restEndAt change), so it reflects real elapsed time even
+  // right after a remount restored restEndAt from storage. Auto-resumes the main
+  // timer the instant it reaches zero — no separate "rest complete" callback needed.
+  useEffect(() => {
+    if (phase !== 'RESTING' || restEndAt == null) return;
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((restEndAt! - Date.now()) / 1000));
+      setRestSecondsRemaining(remaining);
+      if (remaining <= 0) {
+        setRestEndAt(null);
+        setPhase((current) => (current === 'RESTING' ? 'ACTIVE' : current));
+      }
+    }
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [phase, restEndAt]);
+
+  // Mirror phase/elapsed/rest state into sessionStorage so a remount (reload, or
+  // navigating to another page and back) can restore it instead of guessing —
+  // see workoutTimerState.ts for why that guess was the source of the bug.
+  useEffect(() => {
+    if (!sessionId || status !== 'active') return;
+    saveWorkoutTimerState(sessionId, { phase, elapsedSeconds, restEndAt, restDurationSeconds, restSecondsRemaining });
+  }, [sessionId, status, phase, elapsedSeconds, restEndAt, restDurationSeconds, restSecondsRemaining]);
 
   const activeExercise = exercises.find((exercise) => exercise.id === activeExerciseId) ?? null;
 
@@ -130,11 +259,12 @@ export default function LogWorkoutPage() {
   const isActiveExerciseComplete = activeExercise ? isExerciseComplete(activeExercise, entries, plannedSets) : false;
   const nextExercise = activeExercise ? findNextIncompleteExercise(exercises, activeExercise.id, entries, plannedSets) : null;
 
-  const elapsedSeconds = startedAt ? Math.max(0, Math.floor((now - startedAt) / 1000)) : 0;
   const elapsedLabel = formatTime(elapsedSeconds);
 
   async function handleStartRoutine(routine: Routine) {
+    if (isStartingSession) return;
     setSessionError('');
+    setIsStartingSession(true);
     try {
       const started = await startSession({ routineId: routine.id, name: routine.name });
       const firstId = started.exercises[0]?.id ?? null;
@@ -142,6 +272,9 @@ export default function LogWorkoutPage() {
       applySnapshot(finalSnapshot);
       setStartedExerciseIds(new Set());
       setPickerOpen(false);
+      setElapsedSeconds(0);
+      setRestEndAt(null);
+      setPhase('NOT_STARTED');
       setStatus('active');
     } catch (err) {
       setSessionError(
@@ -149,15 +282,22 @@ export default function LogWorkoutPage() {
           ? 'You already have a workout in progress.'
           : "Couldn't start that routine — try again.",
       );
+    } finally {
+      setIsStartingSession(false);
     }
   }
 
   async function handleStartCustom(name: string) {
+    if (isStartingSession) return;
     setSessionError('');
+    setIsStartingSession(true);
     try {
       const started = await startSession({ routineId: null, name });
       applySnapshot(started);
       setStartedExerciseIds(new Set());
+      setElapsedSeconds(0);
+      setRestEndAt(null);
+      setPhase('NOT_STARTED');
       setStatus('active');
       setPickerOpen(true);
     } catch (err) {
@@ -166,6 +306,8 @@ export default function LogWorkoutPage() {
           ? 'You already have a workout in progress.'
           : "Couldn't start a custom workout — try again.",
       );
+    } finally {
+      setIsStartingSession(false);
     }
   }
 
@@ -183,6 +325,46 @@ export default function LogWorkoutPage() {
   function handleStartExercise() {
     if (!activeExerciseId) return;
     setStartedExerciseIds((current) => new Set(current).add(activeExerciseId));
+    // First "Start Exercise" click of the session begins the main timer. If the
+    // workout was RESTING when the user moved on and explicitly started the next
+    // exercise, treat that as ready-to-go too. A manual pause is left untouched —
+    // only an explicit Resume Workout can clear MANUALLY_PAUSED.
+    setPhase((current) => (current === 'NOT_STARTED' || current === 'RESTING' ? 'ACTIVE' : current));
+  }
+
+  function handlePauseWorkout() {
+    setPhase((current) => (current === 'ACTIVE' ? 'MANUALLY_PAUSED' : current));
+  }
+
+  function handleResumeWorkout() {
+    setPhase((current) => (current === 'MANUALLY_PAUSED' ? 'ACTIVE' : current));
+  }
+
+  function handleAdjustRestDuration(delta: number) {
+    setRestDurationSeconds((current) => Math.max(MIN_REST_SECONDS, Math.min(MAX_REST_SECONDS, current + delta)));
+  }
+
+  function handleSkipRest() {
+    setPhase((current) => {
+      if (current !== 'RESTING') return current;
+      setRestEndAt(null);
+      return 'ACTIVE';
+    });
+  }
+
+  // Pauses/resumes the rest countdown itself — distinct from Pause Workout (which
+  // only applies to the ACTIVE phase). Pausing just freezes restSecondsRemaining by
+  // clearing restEndAt (the tick effect naturally stops with no end time to count
+  // down to); resuming re-derives a fresh end timestamp from wherever it was frozen.
+  function handleToggleRestPause() {
+    if (phase !== 'RESTING') return;
+    setRestEndAt((current) => (current == null ? Date.now() + restSecondsRemaining * 1000 : null));
+  }
+
+  function handleResetRest() {
+    if (phase !== 'RESTING') return;
+    setRestSecondsRemaining(restDurationSeconds);
+    setRestEndAt(Date.now() + restDurationSeconds * 1000);
   }
 
   function handleNextExercise() {
@@ -193,8 +375,9 @@ export default function LogWorkoutPage() {
   }
 
   function handleAddSets(setsCount: number, reps: number, weight: number) {
-    if (!activeExercise || !sessionId) return;
+    if (!activeExercise || !sessionId || isLoggingSet) return;
     setSessionError('');
+    setIsLoggingSet(true);
     const tempId = crypto.randomUUID();
     const optimistic: WorkoutSet = {
       id: tempId,
@@ -210,11 +393,89 @@ export default function LogWorkoutPage() {
       .then((saved) => {
         setEntries((current) => current.map((e) => (e.id === tempId ? saved : e)));
         setStartedExerciseIds((current) => new Set(current).add(activeExercise.id));
+
+        // Only decide the rest-vs-complete transition once the set is confirmed
+        // persisted — never start resting (or stop the timer) on an optimistic guess.
+        const entriesWithNew = [...entries, optimistic];
+        const exerciseStillIncomplete = !isExerciseComplete(activeExercise, entriesWithNew, plannedSets);
+        const anotherExerciseRemains = findNextIncompleteExercise(exercises, activeExercise.id, entriesWithNew, plannedSets) !== null;
+
+        if (exerciseStillIncomplete || anotherExerciseRemains) {
+          setRestSecondsRemaining(restDurationSeconds);
+          setRestEndAt(Date.now() + restDurationSeconds * 1000);
+          setPhase('RESTING');
+        } else {
+          // Final required set of the whole workout — stop the main timer, no rest.
+          setRestEndAt(null);
+          setPhase('COMPLETED');
+        }
       })
       .catch(() => {
         setEntries((current) => current.filter((e) => e.id !== tempId)); // rollback
         setSessionError("Couldn't log that set — try again.");
-      });
+      })
+      .finally(() => setIsLoggingSet(false));
+  }
+
+  function handleRestartExercise() {
+    if (!activeExercise || !sessionId || isRestartingExercise || activeSets.length === 0) return;
+    if (
+      !window.confirm(
+        `Restart ${activeExercise.name}? This clears every set you've logged for it, and resets the workout timer and rest timer back to 00:00.`,
+      )
+    ) {
+      return;
+    }
+    setSessionError('');
+    setIsRestartingExercise(true);
+    const exerciseName = activeExercise.name;
+    const idsToRemove = activeSets.map((set) => set.id);
+    const removedEntries = entries.filter((entry) => idsToRemove.includes(entry.id));
+    setEntries((current) => current.filter((entry) => !idsToRemove.includes(entry.id))); // optimistic
+    Promise.all(idsToRemove.map((id) => removeSessionSet(sessionId, id)))
+      .then(() => {
+        setStartedExerciseIds((current) => {
+          const next = new Set(current);
+          next.delete(activeExercise.id);
+          return next;
+        });
+        // "Start from scratch" means the timers reset too, not just the logged
+        // data — back to 00:00/00:00 and NOT_STARTED, exactly like a fresh entry
+        // into the page, requiring an explicit Start Exercise click to resume.
+        setElapsedSeconds(0);
+        setRestEndAt(null);
+        setRestSecondsRemaining(0);
+        setPhase('NOT_STARTED');
+      })
+      .catch(() => {
+        // A partial failure could leave some sets deleted and others not — resync
+        // from the backend instead of guessing, so local state never lies about
+        // what's actually persisted.
+        setEntries((current) => [...current.filter((entry) => !idsToRemove.includes(entry.id)), ...removedEntries]);
+        setSessionError(`Couldn't fully restart ${exerciseName} — try again.`);
+        loadActiveSession().then((snapshot) => {
+          if (snapshot) applySnapshot(snapshot);
+        });
+      })
+      .finally(() => setIsRestartingExercise(false));
+  }
+
+  async function handleTerminateWorkout() {
+    if (!sessionId || isTerminating) return;
+    if (!window.confirm('Cancel this workout? All progress in this session will be discarded and will not be saved.')) {
+      return;
+    }
+    setSessionError('');
+    setIsTerminating(true);
+    try {
+      await discardSession(sessionId);
+      clearWorkoutTimerState(sessionId);
+      handleStartNew();
+    } catch {
+      setSessionError("Couldn't cancel the workout — try again.");
+    } finally {
+      setIsTerminating(false);
+    }
   }
 
   function handleRemoveSet(id: string) {
@@ -232,8 +493,13 @@ export default function LogWorkoutPage() {
     if (!sessionId) return;
     setSessionError('');
     try {
-      const summary = await finishSession(sessionId);
+      // elapsedSeconds is what the user actually watched counting on screen — paused
+      // during rest/manual pause, reset by Restart Exercise — not the raw wall-clock
+      // time since the session began, which would include all of that paused time.
+      const summary = await finishSession(sessionId, elapsedSeconds);
+      clearWorkoutTimerState(sessionId);
       setFinishedSummary(summary);
+      setPhase('COMPLETED');
       setStatus('finished');
       setRecentWorkouts((current) => [summary, ...current].slice(0, 20));
     } catch {
@@ -246,7 +512,6 @@ export default function LogWorkoutPage() {
     setSessionId(null);
     setRoutineId(null);
     setWorkoutName('');
-    setStartedAt(null);
     setFinishedSummary(null);
     setExercises([]);
     setPlannedSets({});
@@ -256,6 +521,10 @@ export default function LogWorkoutPage() {
     setPickerOpen(false);
     setEquipment(ALL_EQUIPMENT);
     setMuscleGroup(ALL_MUSCLE_GROUPS);
+    setPhase('NOT_STARTED');
+    setElapsedSeconds(0);
+    setRestEndAt(null);
+    setRestSecondsRemaining(0);
   }
 
   const exercisesTouched = groupedByExercise.filter((group) => group.sets.length > 0).length;
@@ -310,6 +579,7 @@ export default function LogWorkoutPage() {
             <ActiveWorkout
               workoutName={workoutName}
               elapsedLabel={elapsedLabel}
+              phase={phase}
               exercises={exercises}
               activeExercise={activeExercise}
               pickerOpen={pickerOpen}
@@ -328,9 +598,23 @@ export default function LogWorkoutPage() {
               onSelectRosterExercise={(exercise) => handleSelectExercise(exercise)}
               onAddExercise={handleAddExercise}
               onFinish={handleFinish}
+              onTerminateWorkout={handleTerminateWorkout}
+              isTerminating={isTerminating}
               started={activeExercise ? startedExerciseIds.has(activeExercise.id) : false}
               onStartExercise={handleStartExercise}
-              totalSetsLogged={entries.length}
+              isLoggingSet={isLoggingSet}
+              isResting={phase === 'RESTING'}
+              restSecondsRemaining={restSecondsRemaining}
+              restDurationSeconds={restDurationSeconds}
+              onAdjustRestDuration={handleAdjustRestDuration}
+              onSkipRest={handleSkipRest}
+              isRestPaused={phase === 'RESTING' && restEndAt == null}
+              onToggleRestPause={handleToggleRestPause}
+              onResetRest={handleResetRest}
+              onPauseWorkout={handlePauseWorkout}
+              onResumeWorkout={handleResumeWorkout}
+              onRestartExercise={handleRestartExercise}
+              isRestartingExercise={isRestartingExercise}
               isActiveExerciseComplete={isActiveExerciseComplete}
               hasNextExercise={Boolean(nextExercise)}
               onNextExercise={handleNextExercise}

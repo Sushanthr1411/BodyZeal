@@ -3,10 +3,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   PlayCircle,
-  History,
   CalendarDays,
   Dumbbell,
+  Trophy,
+  Users2,
+  Compass,
   Settings,
+  HelpCircle,
   LogOut,
   Menu,
   X,
@@ -15,6 +18,7 @@ import {
 import Brand from '@/components/Brand';
 import StreakBox from '@/components/dashboard/StreakBox';
 import AssistantWidget from '@/components/assistant/AssistantWidget';
+import HelpModal from '@/components/common/HelpModal';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { loadProfile } from '@/lib/profileStorage';
@@ -25,12 +29,15 @@ const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard' },
   { label: 'Log Workout', icon: PlayCircle, to: '/workout' },
   { label: 'Exercises', icon: Dumbbell, to: '/exercises' },
-  { label: 'History', icon: History, to: '/history' },
-  { label: 'Calendar', icon: CalendarDays, to: '/calendar' },
+  { label: 'Personal Records', icon: Trophy, to: '/personal-records' },
+  { label: 'Roadmap', icon: Compass, to: '/roadmap' },
+  { label: 'Exercise History', icon: CalendarDays, to: '/history' },
+  { label: 'Community', icon: Users2, to: '/community' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
@@ -158,6 +165,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
             <button
               type="button"
+              onClick={() => setHelpOpen(true)}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-ink-300 hover:bg-white/5 hover:text-white"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Need Help?
+            </button>
+            <button
+              type="button"
               onClick={handleLogout}
               disabled={loggingOut}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-300 hover:bg-white/5 hover:text-white"
@@ -245,6 +260,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
               <button
                 type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setHelpOpen(true);
+                }}
+                className="mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-ink-300 hover:bg-white/5 hover:text-white"
+              >
+                <HelpCircle className="h-4 w-4" />
+                Need Help?
+              </button>
+              <button
+                type="button"
                 onClick={handleLogout}
                 disabled={loggingOut}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-300 hover:bg-white/5 hover:text-white"
@@ -266,6 +292,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <AssistantWidget />
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} userName={displayName} />
     </div>
   );
 }

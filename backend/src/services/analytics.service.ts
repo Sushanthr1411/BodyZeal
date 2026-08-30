@@ -8,8 +8,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // Every function below is scoped to `session.status = FINISHED` — matching
 // the frontend, which computes all of this from `loadRecentWorkouts()`
 // (finished workouts only). Quick-log entries (sessionId = null, Phase 3D)
-// are deliberately excluded everywhere here, same as the frontend never
-// merges todayLog into `history` for any of these calculations.
+// are deliberately excluded here — EXCEPT getCurrentStreak, which now also
+// counts a quick-logged set as "did an exercise that day"; the Exercise
+// History page merges quick logs into its own history list too, so the two
+// streak numbers (dashboard sidebar, history page) need to stay in sync.
 const finishedOnly = { status: SessionStatus.FINISHED } as const;
 
 function dateKey(d: Date): string {
@@ -141,14 +143,20 @@ export async function getFrequency(userId: string, weeks: number): Promise<Frequ
 
 // ---- Streak ----
 
-/** Matches currentStreak(): consecutive-day streak ending today, or
- * yesterday if today has no finished workout yet. */
+/** Matches currentStreak()/currentStreakDates() on the frontend: consecutive-day
+ * streak ending today, or yesterday if today has no logged activity yet. A day
+ * counts if the user finished a routine session OR logged a quick set — either
+ * way they actually did an exercise, which is the only thing that should ever
+ * move this number (never just opening the app). */
 export async function getCurrentStreak(userId: string): Promise<number> {
-  const sessions = await prisma.workoutSession.findMany({
-    where: { userId, ...finishedOnly },
-    select: { finishedAt: true },
-  });
-  const days = new Set(sessions.map((s) => dateKey(s.finishedAt!)));
+  const [sessions, quickLogSets] = await Promise.all([
+    prisma.workoutSession.findMany({ where: { userId, ...finishedOnly }, select: { finishedAt: true } }),
+    prisma.workoutSet.findMany({ where: { userId, sessionId: null }, select: { loggedAt: true } }),
+  ]);
+  const days = new Set([
+    ...sessions.map((s) => dateKey(s.finishedAt!)),
+    ...quickLogSets.map((s) => dateKey(s.loggedAt)),
+  ]);
 
   const cursor = new Date();
   let key = dateKey(cursor);

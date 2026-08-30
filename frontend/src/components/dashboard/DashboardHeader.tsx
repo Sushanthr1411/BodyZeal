@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Calendar, PlayCircle, PlusCircle, Sparkles } from 'lucide-react';
+import type { RecentWorkout } from '@/lib/recentWorkouts';
+import DownloadReportButton from '@/components/dashboard/report/DownloadReportButton';
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -14,9 +16,12 @@ function greeting(): string {
 type DashboardHeaderProps = {
   firstName?: string;
   hasLoggedToday?: boolean;
+  history: RecentWorkout[];
+  reportUserName: string;
+  reportUserEmail?: string;
 };
 
-export default function DashboardHeader({ firstName, hasLoggedToday }: DashboardHeaderProps) {
+export default function DashboardHeader({ firstName, hasLoggedToday, history, reportUserName, reportUserEmail }: DashboardHeaderProps) {
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -68,6 +73,7 @@ export default function DashboardHeader({ firstName, hasLoggedToday }: Dashboard
           >
             <PlusCircle className="h-4.5 w-4.5" strokeWidth={2} />
           </Link>
+          <DownloadReportButton history={history} userName={reportUserName} userEmail={reportUserEmail} />
           <Link to="/workout" className="btn-accent">
             <PlayCircle className="h-4 w-4" />
             Start workout

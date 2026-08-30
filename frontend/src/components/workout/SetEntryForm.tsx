@@ -3,9 +3,10 @@ import { Plus, AlertCircle } from 'lucide-react';
 
 type SetEntryFormProps = {
   onAddSets: (sets: number, reps: number, weight: number) => void;
+  disabled?: boolean;
 };
 
-export default function SetEntryForm({ onAddSets }: SetEntryFormProps) {
+export default function SetEntryForm({ onAddSets, disabled }: SetEntryFormProps) {
   const [sets, setSets] = useState('1');
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
@@ -13,6 +14,7 @@ export default function SetEntryForm({ onAddSets }: SetEntryFormProps) {
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (disabled) return;
     const parsedSets = Number(sets);
     const parsedReps = Number(reps);
     const parsedWeight = Number(weight);
@@ -53,7 +55,7 @@ export default function SetEntryForm({ onAddSets }: SetEntryFormProps) {
       ))}
       <div>
         <span className="label hidden sm:block">&nbsp;</span>
-        <button type="submit" className="btn-accent w-full">
+        <button type="submit" disabled={disabled} className="btn-accent w-full disabled:cursor-not-allowed disabled:opacity-60">
           <Plus className="h-4 w-4" />
           Add Set
         </button>

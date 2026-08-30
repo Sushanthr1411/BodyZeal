@@ -21,14 +21,24 @@ export type RecentWorkout = {
   totalSets?: number;
   sets?: RecentWorkoutSet[];
   durationSeconds?: number;
+  /** 'quickLog' = a one-off set from the Dashboard's "Log a Set" widget, not a full routine session. */
+  kind?: 'session' | 'quickLog';
 };
 
-export async function loadRecentWorkouts(): Promise<RecentWorkout[]> {
+export async function loadRecentWorkouts(limit = 60): Promise<RecentWorkout[]> {
   try {
-    return await api.get<RecentWorkout[]>('/api/workouts?limit=60');
+    return await api.get<RecentWorkout[]>(`/api/workouts?limit=${limit}`);
   } catch {
     return [];
   }
+}
+
+// Permanently removes a finished workout (and its sets, via cascade) — for
+// correcting a wrongly-logged entry from History. Every analytics/streak/
+// history query already filters to FINISHED sessions, so once this succeeds
+// the workout is gone from every sum and chart, not just the history list.
+export async function deleteWorkout(id: string): Promise<void> {
+  await api.delete(`/api/workouts/${id}`);
 }
 
 // Deprecated, localStorage-backed fallback — kept only until the active-
