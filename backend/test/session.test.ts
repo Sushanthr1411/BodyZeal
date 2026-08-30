@@ -317,6 +317,44 @@ test('an active session can be completed, with totals computed from logged sets'
   assert.equal((await activeCheck.json()), null, 'a finished session must no longer be "active"');
 });
 
+test('finishing a session with no request body at all still succeeds (durationSeconds is optional)', async () => {
+  const { body: started } = await startAs(UID_A, { name: 'Bodyless Finish' });
+  // Deliberately no Content-Type and no body — every finish caller in this test
+  // suite exercises this exact shape, matching what the pre-existing endpoint
+  // (before durationSeconds was added) always accepted.
+  const res = await fetch(`${baseUrl}/api/sessions/${started.id}/finish`, { method: 'POST', headers: testAuthHeader(UID_A) });
+  assert.equal(res.status, 200);
+  const body = (await res.json()) as any;
+  assert.ok(body.durationSeconds >= 0);
+});
+
+test('finishing a session with an explicit durationSeconds is accepted', async () => {
+  const { body: started } = await startAs(UID_A, { name: 'Explicit Duration' });
+  const res = await fetch(`${baseUrl}/api/sessions/${started.id}/finish`, {
+    method: 'POST',
+    headers: jsonHeaders(UID_A),
+    body: JSON.stringify({ durationSeconds: 0 }),
+  });
+  assert.equal(res.status, 200);
+  const body = (await res.json()) as any;
+  // durationSeconds is clamped to the real wall-clock elapsed time, which is
+  // also ~0 here, so 0 is the one value guaranteed not to be clamped upward.
+  assert.equal(body.durationSeconds, 0);
+});
+
+test('finishing a session with an invalid durationSeconds is rejected with 400', async () => {
+  const { body: started } = await startAs(UID_A, { name: 'Invalid Duration' });
+  const res = await fetch(`${baseUrl}/api/sessions/${started.id}/finish`, {
+    method: 'POST',
+    headers: jsonHeaders(UID_A),
+    body: JSON.stringify({ durationSeconds: -5 }),
+  });
+  assert.equal(res.status, 400);
+
+  const row = await prisma.workoutSession.findUnique({ where: { id: started.id } });
+  assert.equal(row!.status, 'ACTIVE', 'a rejected finish must not change session status');
+});
+
 test('a completed session cannot be finished again', async () => {
   const { body: started } = await startAs(UID_A, { name: 'Double Finish' });
   await fetch(`${baseUrl}/api/sessions/${started.id}/finish`, { method: 'POST', headers: testAuthHeader(UID_A) });

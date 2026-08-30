@@ -35,7 +35,7 @@ export default function FrequencyHeatmap({ data }: FrequencyHeatmapProps) {
           </span>
           <div className="min-w-0">
             <p className="truncate text-base font-semibold text-ink-900">Workout Frequency</p>
-            <p className="truncate text-sm text-ink-500">Last {weeks.length} weeks</p>
+            <p className="mt-0.5 truncate text-sm text-ink-500">Last {weeks.length} weeks</p>
           </div>
         </div>
         <p className="shrink-0 text-sm font-medium text-ink-600">{activeDays} active days</p>

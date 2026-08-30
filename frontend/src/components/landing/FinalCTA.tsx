@@ -12,13 +12,13 @@ export default function FinalCTA() {
           Make every workout count
         </span>
         <h2 className="mt-5 font-display text-3xl font-700 tracking-tight text-white text-balance sm:text-4xl lg:text-5xl">
-          Start logging. Stay consistent.
+          Start training. Stay consistent.
           <br className="hidden sm:block" />
-          <span className="text-energy-400">See your progress add up.</span>
+          <span className="text-energy-400">Watch your progress add up.</span>
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-lg text-ink-300 text-pretty">
-          Simple workout logging and organization. No accounts to configure, no
-          clutter to wade through — just you and your training.
+          A guided plan, real coaching, and every rep tracked automatically —
+          free to start, in under a minute.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link to="/signup" className="btn-accent text-base">

@@ -20,7 +20,7 @@ export default function VolumeTrendChart({ data }: VolumeTrendChartProps) {
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink-900">Volume Trend</p>
-            <p className="truncate text-xs text-ink-500">Last 7 days</p>
+            <p className="mt-0.5 truncate text-xs text-ink-500">Last 7 days</p>
           </div>
         </div>
         <div className="shrink-0 text-right">

@@ -7,6 +7,7 @@ import {
   Dumbbell,
   Layers,
   ListChecks,
+  ListOrdered,
   PlayCircle,
   Repeat,
   Target,
@@ -15,7 +16,9 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import EmptyState from '@/components/common/EmptyState';
+import TutorialModal from '@/components/exercises/TutorialModal';
 import { EXERCISES } from '@/data/exercises';
+import { EXERCISE_TUTORIALS } from '@/data/exerciseTutorials';
 import { loadRecentWorkouts, type RecentWorkout } from '@/lib/recentWorkouts';
 import { exerciseProgress, exerciseStats } from '@/utils/analytics';
 
@@ -35,6 +38,7 @@ export default function ExerciseDetailPage() {
   const [range, setRange] = useState<RangeKey>('30d');
   const [metric, setMetric] = useState<Metric>('weight');
   const [history, setHistory] = useState<RecentWorkout[]>([]);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   useEffect(() => {
     let cancelled = false;
     loadRecentWorkouts().then((loaded) => {
@@ -46,6 +50,7 @@ export default function ExerciseDetailPage() {
   }, []);
 
   const exercise = EXERCISES.find((item) => item.id === id);
+  const tutorial = exercise ? EXERCISE_TUTORIALS[exercise.id] : undefined;
 
   const allPoints = useMemo(
     () => (exercise ? exerciseProgress(history, exercise.name) : []),
@@ -117,16 +122,37 @@ export default function ExerciseDetailPage() {
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/workout', { state: { quickLogExerciseId: exercise.id } })}
-            className="btn-accent shrink-0"
-          >
-            <PlayCircle className="h-4 w-4" />
-            Log this exercise
-          </button>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {tutorial && (
+              <button
+                type="button"
+                onClick={() => setTutorialOpen(true)}
+                className="btn-outline"
+              >
+                <ListOrdered className="h-4 w-4" />
+                Tutorial
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate('/workout', { state: { quickLogExerciseId: exercise.id } })}
+              className="btn-accent"
+            >
+              <PlayCircle className="h-4 w-4" />
+              Log this exercise
+            </button>
+          </div>
         </div>
       </div>
+
+      {tutorial && (
+        <TutorialModal
+          open={tutorialOpen}
+          onClose={() => setTutorialOpen(false)}
+          exercise={exercise}
+          tutorial={tutorial}
+        />
+      )}
 
       <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="mx-auto max-w-5xl space-y-6">

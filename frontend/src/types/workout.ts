@@ -36,6 +36,14 @@ export interface WorkoutSet {
   loggedAt: string;
 }
 
+/**
+ * Client-side execution state for an in-progress workout session. Distinct from the backend's
+ * SessionStatus (ACTIVE | FINISHED | DISCARDED) — this drives the main workout timer / rest
+ * timer / pause UI and is never persisted (start, log-set, and finish already sync with the
+ * backend; pausing and resting are ephemeral, local-only phases within an ACTIVE session).
+ */
+export type WorkoutPhase = 'NOT_STARTED' | 'ACTIVE' | 'RESTING' | 'MANUALLY_PAUSED' | 'COMPLETED';
+
 export interface DailySummary {
   date: string;
   exercisesCompleted: number;

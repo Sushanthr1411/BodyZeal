@@ -30,7 +30,7 @@ export default function ExerciseProgressChart({ history }: ExerciseProgressChart
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink-900">Progress &amp; Personal Records</p>
-            <p className="truncate text-xs text-ink-500">Top weight per session</p>
+            <p className="mt-0.5 truncate text-xs text-ink-500">Top weight per session</p>
           </div>
         </div>
 

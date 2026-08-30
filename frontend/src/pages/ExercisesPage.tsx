@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Search } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
@@ -14,10 +14,15 @@ import type { Exercise, MuscleGroup } from '@/types/workout';
 
 export default function ExercisesPage() {
   const navigate = useNavigate();
+  const [search, setSearch] = useState('');
   const [equipment, setEquipment] = useState<EquipmentFilter>(ALL_EQUIPMENT);
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroupFilter>(ALL_MUSCLE_GROUPS);
 
-  const visibleExercises = filterExercises(EXERCISES, equipment, muscleGroup);
+  const visibleExercises = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const filtered = filterExercises(EXERCISES, equipment, muscleGroup);
+    return query ? filtered.filter((exercise) => exercise.name.toLowerCase().includes(query)) : filtered;
+  }, [equipment, muscleGroup, search]);
   const goToDetail = (exercise: Exercise) => navigate(`/exercises/${exercise.id}`);
 
   // Browsing everything reads better sectioned by muscle group; a specific filter is
@@ -42,6 +47,16 @@ export default function ExercisesPage() {
             <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl" />
             </div>
+            <div className="relative mb-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search exercises..."
+                className="input pl-9"
+              />
+            </div>
             <ExerciseFilters
               equipment={equipment}
               muscleGroup={muscleGroup}
@@ -59,7 +74,7 @@ export default function ExercisesPage() {
               <EmptyState
                 icon={Dumbbell}
                 title="No exercises found for this combination."
-                description="Try changing the equipment or muscle group."
+                description="Try a different search, or change the equipment or muscle group filter."
               />
             </div>
           ) : sections ? (

@@ -161,6 +161,11 @@ export default function SignupForm() {
           Log in
         </Link>
       </p>
+      <p className="mt-2 text-center text-sm text-ink-500">
+        <Link to="/login" state={{ openReset: true }} className="hover:text-ink-800 hover:underline">
+          Forgot password?
+        </Link>
+      </p>
 
       <p className="mt-4 rounded-lg bg-ink-100/70 px-3 py-2 text-center text-xs text-ink-500">
         Your account is secured with Firebase Authentication.

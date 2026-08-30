@@ -1,8 +1,9 @@
-// Backed by the BodyZeal API (GET /api/workouts/today, POST/DELETE
-// /api/workouts/quick-log) instead of localStorage. loadTodayLog/addTodayLog
-// take over saveTodayLog's old whole-array-sync role — each add/remove is
-// now its own call instead of one effect writing the full array on every
-// change.
+// Backed by the BodyZeal API (GET /api/workouts/today, POST /api/workouts/quick-log)
+// instead of localStorage. Deleting a quick-logged entry is deliberately not exposed
+// here — that only happens from the Exercise History page (DELETE /api/workouts/:id,
+// which recognizes a quick-log id as well as a session id), so a wrongly-logged set
+// still shows up in Today's Activity as a nudge to go fix it there, and every removal
+// path stays in one place instead of two independently-maintained ones.
 import { api } from '@/lib/apiClient';
 import type { WorkoutSet } from '@/types/workout';
 
@@ -21,8 +22,4 @@ export async function addTodayLogEntry(entry: {
   weight: number;
 }): Promise<WorkoutSet> {
   return api.post<WorkoutSet>('/api/workouts/quick-log', entry);
-}
-
-export async function removeTodayLogEntry(id: string): Promise<void> {
-  await api.delete(`/api/workouts/quick-log/${id}`);
 }

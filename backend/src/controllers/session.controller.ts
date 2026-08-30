@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
-import { getActiveSession, startSession, patchSession, logSet, deleteSet, finishSession } from '../services/session.service';
+import { getActiveSession, startSession, patchSession, logSet, deleteSet, finishSession, discardSession } from '../services/session.service';
 import { AppError } from '../errors/AppError';
-import type { CreateSessionInput, PatchSessionInput, LogSetInput } from '../schemas/session.schema';
+import type { CreateSessionInput, PatchSessionInput, LogSetInput, FinishSessionInput } from '../schemas/session.schema';
 
 export async function getActiveSessionController(req: Request, res: Response) {
   if (!req.user) throw AppError.unauthorized();
@@ -41,6 +41,14 @@ export async function deleteSetController(req: Request, res: Response) {
 export async function finishSessionController(req: Request, res: Response) {
   if (!req.user) throw AppError.unauthorized();
   const id = req.params.id as string;
-  const finished = await finishSession(req.user.uid, id);
+  const { durationSeconds } = req.body as FinishSessionInput;
+  const finished = await finishSession(req.user.uid, id, durationSeconds);
   res.status(200).json(finished);
+}
+
+export async function discardSessionController(req: Request, res: Response) {
+  if (!req.user) throw AppError.unauthorized();
+  const id = req.params.id as string;
+  await discardSession(req.user.uid, id);
+  res.status(204).send();
 }

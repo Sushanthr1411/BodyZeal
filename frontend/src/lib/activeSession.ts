@@ -13,6 +13,7 @@
 //                      localStorage version did)
 //   remove a set   -> DELETE /api/sessions/:id/sets/:setId
 //   finish         -> POST /api/sessions/:id/finish
+//   discard/cancel -> POST /api/sessions/:id/discard
 import { api } from '@/lib/apiClient';
 import type { Exercise, WorkoutSet } from '@/types/workout';
 import type { PlannedSetsMap } from '@/utils/routine';
@@ -56,6 +57,14 @@ export async function removeSessionSet(sessionId: string, setId: string): Promis
   await api.delete(`/api/sessions/${sessionId}/sets/${setId}`);
 }
 
-export async function finishSession(sessionId: string): Promise<RecentWorkout> {
-  return api.post<RecentWorkout>(`/api/sessions/${sessionId}/finish`);
+// durationSeconds is the frontend's own tracked active-workout time (paused during
+// rest/manual pause, reset by Restart Exercise) — the backend prefers it over raw
+// wall-clock session time when given, so the summary/history reflect what the user
+// actually saw counting on screen, not time spent paused, resting, or navigated away.
+export async function finishSession(sessionId: string, durationSeconds?: number): Promise<RecentWorkout> {
+  return api.post<RecentWorkout>(`/api/sessions/${sessionId}/finish`, { durationSeconds });
+}
+
+export async function discardSession(sessionId: string): Promise<void> {
+  await api.post(`/api/sessions/${sessionId}/discard`);
 }

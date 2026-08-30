@@ -28,6 +28,7 @@ type ExerciseSessionCardProps = {
   isComplete: boolean;
   hasNextExercise: boolean;
   onNextExercise: () => void;
+  isLoggingSet?: boolean;
 };
 
 export default function ExerciseSessionCard({
@@ -49,6 +50,7 @@ export default function ExerciseSessionCard({
   isComplete,
   hasNextExercise,
   onNextExercise,
+  isLoggingSet,
 }: ExerciseSessionCardProps) {
   const [showExtraSetForm, setShowExtraSetForm] = useState(false);
 
@@ -157,7 +159,7 @@ export default function ExerciseSessionCard({
             </div>
           )}
 
-          {(!isComplete || showExtraSetForm) && <SetEntryForm onAddSets={onAddSets} />}
+          {(!isComplete || showExtraSetForm) && <SetEntryForm onAddSets={onAddSets} disabled={isLoggingSet} />}
 
           {isComplete && !showExtraSetForm && (
             <button
@@ -171,7 +173,7 @@ export default function ExerciseSessionCard({
           )}
 
           <div>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">Sets</p>
               {sets.length > 0 && (
                 <p className="text-xs font-medium text-ink-600">

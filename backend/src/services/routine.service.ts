@@ -1,4 +1,4 @@
-import type { Routine as RoutineRow, RoutineExercise as RoutineExerciseRow } from '@prisma/client';
+import { SessionStatus, type Routine as RoutineRow, type RoutineExercise as RoutineExerciseRow } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { AppError } from '../errors/AppError';
 import type { RoutineBodyInput } from '../schemas/routine.schema';
@@ -133,8 +133,11 @@ export async function deleteRoutine(userId: string, routineId: string): Promise<
   // would otherwise succeed silently and orphan the routine name off of a
   // user's own workout history. Blocking it with a clear 409 is better than
   // either a surprise 500 or quietly losing that link — checked explicitly
-  // rather than relying on a schema change.
-  const sessionCount = await prisma.workoutSession.count({ where: { routineId } });
+  // rather than relying on a schema change. Only FINISHED sessions count as
+  // "history" here — an ACTIVE or DISCARDED session (e.g. one cancelled via
+  // Cancel Workout) never appears in history/analytics either, so it
+  // shouldn't be able to permanently block deleting the routine.
+  const sessionCount = await prisma.workoutSession.count({ where: { routineId, status: SessionStatus.FINISHED } });
   if (sessionCount > 0) {
     throw new AppError(409, 'CONFLICT', 'This routine has workout history and cannot be deleted', [
       { field: 'id', issue: `routine is referenced by ${sessionCount} workout session(s)` },

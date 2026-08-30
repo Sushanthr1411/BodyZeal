@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { useAuth } from '@/context/useAuth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,40 @@ export default function LoginForm() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const [mode, setMode] = useState<'login' | 'reset'>(
+    (location.state as { openReset?: boolean } | null)?.openReset ? 'reset' : 'login',
+  );
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSending, setResetSending] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (resetSending) return;
+    const trimmed = resetEmail.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setResetError('Enter a valid email address.');
+      return;
+    }
+    setResetError('');
+    setResetSending(true);
+    try {
+      await resetPassword(trimmed);
+      setResetSent(true);
+    } catch (error) {
+      setResetError(getAuthErrorMessage(error, "Couldn't send the reset link. Try again."));
+    } finally {
+      setResetSending(false);
+    }
+  }
+
+  function backToLogin() {
+    setMode('login');
+    setResetSent(false);
+    setResetError('');
+  }
 
   function validate() {
     const next: typeof errors = {};
@@ -45,6 +80,71 @@ export default function LoginForm() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (mode === 'reset') {
+    return (
+      <AuthLayout>
+        <button
+          type="button"
+          onClick={backToLogin}
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-ink-900"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to log in
+        </button>
+
+        <div className="mb-8">
+          <h1 className="font-display text-3xl font-700 tracking-tight text-ink-900">Reset your password</h1>
+          <p className="mt-2 text-ink-600">
+            Enter your account email and we'll send you a link to set a new password.
+          </p>
+        </div>
+
+        {resetSent ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl bg-energy-50/60 px-4 py-8 text-center">
+            <CheckCircle2 className="h-8 w-8 text-energy-600" strokeWidth={2} />
+            <p className="text-sm font-semibold text-ink-900">Check your email</p>
+            <p className="text-sm text-ink-500">
+              If an account exists for <span className="font-medium text-ink-700">{resetEmail.trim()}</span>, a
+              password reset link is on its way.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleReset} className="space-y-5" noValidate>
+            <div>
+              <label htmlFor="reset-email" className="label">Email</label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                <input
+                  id="reset-email"
+                  type="email"
+                  autoComplete="email"
+                  className={`input pl-11 ${resetError ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10' : ''}`}
+                  placeholder="you@example.com"
+                  value={resetEmail}
+                  onChange={(e) => {
+                    setResetEmail(e.target.value);
+                    if (resetError) setResetError('');
+                  }}
+                  aria-invalid={!!resetError}
+                />
+              </div>
+              {resetError && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {resetError}
+                </p>
+              )}
+            </div>
+            <button type="submit" className="btn-accent w-full text-base" disabled={resetSending}>
+              {resetSending ? 'Sending link...' : 'Send reset link'}
+              {!resetSending && <ArrowRight className="h-4 w-4" />}
+            </button>
+          </form>
+        )}
+      </AuthLayout>
+    );
   }
 
   return (
@@ -134,9 +234,16 @@ export default function LoginForm() {
             />
             Remember me
           </label>
-          <span className="text-sm text-ink-500 hover:text-ink-800 cursor-pointer">
+          <button
+            type="button"
+            onClick={() => {
+              setResetEmail(email);
+              setMode('reset');
+            }}
+            className="text-sm text-ink-500 hover:text-ink-800"
+          >
             Forgot password?
-          </span>
+          </button>
         </div>
 
         <button type="submit" className="btn-accent w-full text-base" disabled={submitting}>

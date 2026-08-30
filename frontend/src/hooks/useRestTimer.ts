@@ -5,7 +5,7 @@ export const MIN_REST_SECONDS = 15;
 export const MAX_REST_SECONDS = 300;
 const DURATION_STEP = 15;
 
-export function useRestTimer(defaultSeconds: number = DEFAULT_REST_SECONDS) {
+export function useRestTimer(defaultSeconds: number = DEFAULT_REST_SECONDS, onComplete?: () => void) {
   const [duration, setDurationState] = useState(defaultSeconds);
   const [seconds, setSeconds] = useState(defaultSeconds);
   const [running, setRunning] = useState(false);
@@ -23,6 +23,13 @@ export function useRestTimer(defaultSeconds: number = DEFAULT_REST_SECONDS) {
     }, 1000);
     return () => window.clearInterval(interval);
   }, [running]);
+
+  // Fires once when the countdown actually reaches zero (never on mount —
+  // defaultSeconds/duration are always >= MIN_REST_SECONDS).
+  useEffect(() => {
+    if (seconds === 0) onComplete?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds]);
 
   function start() {
     if (seconds > 0) setRunning(true);

@@ -12,6 +12,7 @@ import { sessionRouter } from './routes/session.routes';
 import { workoutRouter } from './routes/workout.routes';
 import { analyticsRouter } from './routes/analytics.routes';
 import { assistantRouter } from './routes/assistant.routes';
+import { supportRouter } from './routes/support.routes';
 
 export function createApp() {
   const app = express();
@@ -47,6 +48,7 @@ export function createApp() {
   app.use(workoutRouter);
   app.use(analyticsRouter);
   app.use(assistantRouter);
+  app.use(supportRouter);
 
   // Frontend wiring and GCP deployment come after Phase 3F approval.
 

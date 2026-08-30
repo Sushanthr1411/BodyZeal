@@ -1,4 +1,4 @@
-import { Clock, Dumbbell, ListChecks } from 'lucide-react';
+import { Clock, Dumbbell, ListChecks, Trash2, Zap } from 'lucide-react';
 import type { RecentWorkout } from '@/lib/recentWorkouts';
 import { formatTime, groupSetsByExercise } from '@/utils/workout';
 
@@ -6,10 +6,13 @@ type WorkoutRecordCardProps = {
   workout: RecentWorkout;
   /** Unique prefix for synthesizing per-set ids (grouping needs a WorkoutSet id, which RecentWorkoutSet doesn't carry). */
   idPrefix: string;
+  /** Omit to hide the delete control entirely (e.g. contexts without a workout id). */
+  onDelete?: (workout: RecentWorkout) => void;
+  isDeleting?: boolean;
 };
 
-/** One finished-workout summary card: name/time, duration/sets/volume chips, and its exercise breakdown. Shared by History and Calendar. */
-export default function WorkoutRecordCard({ workout, idPrefix }: WorkoutRecordCardProps) {
+/** One finished-workout summary card: name/time, duration/sets/volume chips, and its exercise breakdown. Shared across the Exercise History page. */
+export default function WorkoutRecordCard({ workout, idPrefix, onDelete, isDeleting }: WorkoutRecordCardProps) {
   const grouped = groupSetsByExercise(
     (workout.sets ?? []).map((set, index) => ({
       id: `${idPrefix}-${index}`,
@@ -27,7 +30,15 @@ export default function WorkoutRecordCard({ workout, idPrefix }: WorkoutRecordCa
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-energy-400/10 blur-3xl" />
       <div className="relative flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-base font-semibold text-ink-900">{workout.name}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-base font-semibold text-ink-900">{workout.name}</p>
+            {workout.kind === 'quickLog' && (
+              <span className="chip border-sky-300/60 bg-sky-50 text-[10px] text-sky-700">
+                <Zap className="h-2.5 w-2.5" />
+                Quick log
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-ink-500">
             {new Date(workout.finishedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
           </p>
@@ -46,6 +57,17 @@ export default function WorkoutRecordCard({ workout, idPrefix }: WorkoutRecordCa
           <span className="chip border-energy-300/60 bg-energy-50 text-energy-800">
             {workout.totalVolume.toLocaleString()} kg
           </span>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(workout)}
+              disabled={isDeleting}
+              aria-label={`Delete ${workout.name}`}
+              className="inline-flex items-center gap-1 rounded-lg p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
